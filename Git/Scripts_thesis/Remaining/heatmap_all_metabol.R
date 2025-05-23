@@ -3,6 +3,8 @@
 library(pheatmap)
 library(tidyverse)
 
+#load data
+
 t_z_score <- read.csv("I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/figures/R/data/z_scores_trans.csv")
 rownames(t_z_score) <- t_z_score$X  
 t_z_score$X <- NULL

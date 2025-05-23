@@ -1,0 +1,27 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+select genes 
+
+```{r}
+unique_full_rna <- read.csv("I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/1.unbiased_rnaseq/results/2.DEG/4.top_genes/unique_full_list_top_genes_per_comparinson_vulcano.csv", sep = ",", header = TRUE)
+
+unique_full_pro <- read.csv("I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/2.unbiased_proteomics/results/top_genes/unique_full_list_top_Genes.csv", sep = ",", header = TRUE) 
+
+
+unique_full_rna <- toupper(trimws(unique_full_rna$geneName))
+unique_full_pro <- toupper(trimws(unique_full_pro$Gene))
+
+#look at which are the same
+
+same_genes <- intersect(unique_full_rna, unique_full_pro)
+length(same_genes)
+
+# #save as a list
+# 
+write.csv(same_genes, "I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/3.unbiased_indirect_integration/results/selected_genes", row.names = FALSE)
+
+```
+

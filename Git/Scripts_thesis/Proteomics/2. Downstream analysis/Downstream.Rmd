@@ -1,0 +1,633 @@
+---
+title: "Downstream analysis"
+output: html_notebook
+---
+
+I already made some codes for downastream analsysis (once we have the right fit of the data, for example I used the logged/raw one). 
+
+#MA plot
+
+For the ma plots, we made a output dir to save our images in. After that we looped trough every comparison in our result list. We get the results out of the result list. We make a vulcano plot with our logFC vs average expression. than we print and save the plots.
+
+```{r}
+output_directory <- "I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/2.unbiased_proteomics/results/ma_plot/"
+
+
+if (!dir.exists(output_directory)) {
+  dir.create(output_directory, recursive = TRUE)
+}
+
+
+for (contrast_name in names(results_list_log)) {
+  result <- results_list_log[[contrast_name]]
+ 
+  if (nrow(result) > 0) {
+    p <- ggplot(result, aes(x = AveExpr, y = logFC)) +
+      geom_point(aes(color = P.Value < 0.05), size = 1) +
+      scale_color_manual(values = c("lightblue", "red")) +
+      labs(title = paste("MA-Plot:", contrast_name),
+           x = "Average Expression (AveExpr)",
+           y = "Log2 Fold Change (logFC)") +
+      theme_minimal() +
+      theme(legend.position = "none")
+   
+    print(p)
+   
+    output_filename <- paste0(output_directory, contrast_name, "_ma_plot.png")
+    ggsave(output_filename, plot = p, width = 8, height = 6)
+  }
+}
+
+```
+
+
+#vulcano plot
+
+For the vulcano plots, we made a output dir to save our images in. After that we looped trough every comparison in our result list. We get the results out of the result list. We make a vulcano plot with our logFC vs -log10(P.Value). than we print and save the plots. 
+
+## need to add the Gene names ##
+
+```{r}
+output_directory <- "I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/2.unbiased_proteomics/results/vul_plot/"
+
+if (!dir.exists(output_directory)) {
+  dir.create(output_directory, recursive = TRUE)
+}
+
+
+for (contrast_name in names(results_list_log)) {
+  result <- results_list_log[[contrast_name]]
+  if (nrow(result) > 0) {
+    p <- ggplot(result, aes(x = logFC, y = -log10(P.Value))) +
+      geom_point(aes(color = P.Value < 0.05 & abs(logFC) > 1), size = 2) +  
+      scale_color_manual(values = c("lightblue", "red")) +
+      geom_text_repel(data = subset(result, P.Value < 0.05 & abs(logFC) > 0.5),
+                      aes(label = gene_id),
+                      max.overlaps = 10,
+                      size = 3) +
+      labs(title = paste("Volcano Plot:", contrast_name),
+           x = "Log2 Fold Change (logFC)",
+           y = "-log10(P Value)") +
+      theme_bw() +
+      theme(legend.position = "none")
+    
+    print(p)
+    
+    #output_filename <- paste0(output_directory, contrast_name, "_volcano_plot_FC0.5.png")
+    #ggsave(output_filename, plot = p, width = 8, height = 6)
+  }
+ 
+}
+
+```
+
+
+#full list top Genes
+
+```{r}
+top_Genes_list_full <- list()
+
+select_top_Genes <- function(res, comparison) {
+  # Vervang NA's in de padj kolom door 1, zodat deze Genen onderaan de selectie komen.
+  res$P.Value[is.na(res$P.Value)] <- 1
+ 
+  # Zet de resultaten om naar een data.frame en selecteer de topGenen gebaseerd op filtercriteria
+  res_df <- as.data.frame(res)
+  filtered_res <- res_df[res_df$P.Value < 0.05 & abs(res_df$logFC) > 0.5, ]
+ 
+  # Controleer of de vergelijking significante Genen heeft
+  if (nrow(filtered_res) == 0) {
+    cat("Geen significante Genen gevonden voor", comparison, "\n")
+    return(NULL)
+  } else {
+    cat("Top Genen voor", comparison, ":\n")
+    return(data.frame(Comparison = comparison, Gene = filtered_res$gene_id, ProteinID = filtered_res$protein))
+  }
+}
+
+selected_comparisons <- c("aCD3_aCD28 - aCD3", "aCD3_aCD28_a4_1BB - aCD3", "aCD3_aCD27 - aCD3", "aCD3_aCD27_aCD28 - aCD3", "aCD3_a4_1BB - aCD3")
+print(names(results_list_log))
+
+# Loop door elke vergelijking in de results_list
+for (comparison in selected_comparisons) {
+  res_top_Genes <- results_list_log[[comparison]]
+  top_Genes <- select_top_Genes(res_top_Genes, comparison)
+ 
+  if (!is.null(top_Genes)) {
+    top_Genes_list_full[[comparison]] <- top_Genes
+  }
+}
+
+# Sla de volledige lijst op en controleer
+if (length(top_Genes_list_full) > 0) {
+  full_list <- do.call(rbind, top_Genes_list_full)
+  write.csv(full_list, file = "I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/2.unbiased_proteomics/results/top_Genes/full_list_top_Genes_FC05_costim.csv", row.names = FALSE)
+} else {
+  cat("De lijst is leeg")
+}
+
+# Maak een lijst met unieke Genen en sla deze op
+if (exists("full_list")) {
+  unique_full_list <- full_list[!duplicated(full_list$Gene), ]
+  write.csv(unique_full_list, file = "I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/2.unbiased_proteomics/results/top_Genes/unique_full_list_top_GenesFC05_costim.csv", row.names = FALSE)
+} else {
+  cat("Geen data om unieke Genenlijst te maken")
+}
+
+```
+
+#full list as different dataframe with values 
+
+
+```{r}
+# Making the full DEGs list start with an empty list
+top_Genes_list_full <- list()
+
+# Aangepaste functie om de top Genen te selecteren inclusief relevante kolommen
+select_top_Genes <- function(res, comparison) {
+  # Vervang NAs door 1 zodat deze aan de onderkant van de lijst staan
+  res$P.Value[is.na(res$P.value)] <- 1
+  
+  # Converteer res naar een dataframe en filter op significante waarden
+  res_df <- as.data.frame(res)
+  filtered_res <- res_df[res_df$P.Value < 0.05 & abs(res_df$logFC) > 0.5, ]
+  
+  # Controleer of er significante Genen zijn
+  if (nrow(filtered_res) == 0) {
+    cat("no Genes found for", comparison, "\n")
+    return(NULL)
+  } else {
+    cat("top Genes for", comparison, ":\n")
+    
+    # Voeg de vergelijking naam toe aan de gefilterde resultaten
+    filtered_res$Comparison <- comparison
+ 
+    # Verplaats de kolommen zodat Comparison en Gene eerst komen
+    filtered_res <- filtered_res %>% select(Comparison, everything())
+    
+    return(filtered_res)
+  }
+}
+
+
+
+
+
+
+# Loop voor elke vergelijking en aparte dataframes opslaan
+for (comparison in names(results_list_log)) {
+  res_top_Genes <- results_list_log[[comparison]]
+  top_Genes <- select_top_Genes(res_top_Genes, comparison)
+  
+  if (!is.null(top_Genes)) {
+   
+    # Sla elke dataframe op in een aparte CSV-bestand
+    output_path <- paste0("I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/2.unbiased_proteomics/results/top_Genes/", comparison, "_top_Genes_FC0.5.csv")
+    write.csv(top_Genes, file = output_path, row.names = FALSE)
+    
+    # Bewaar ook elke dataframe in de lijst (optioneel, als je ze in de R sessie nodig hebt)
+    top_Genes_list_full[[comparison]] <- top_Genes
+  }
+}
+
+# Controleer de volledige lijst (indien nodig)
+if (length(top_Genes_list_full) == 0) {
+  cat("Geen Genen gevonden voor enige vergelijking.")
+}
+
+```
+
+
+# vul top 3 Genes
+
+```{r}
+top_Genes_list_full <- list()
+
+# Functie om de top 3 genen te selecteren
+select_top_Genes <- function(res, comparison) {
+  # Vervang NA's in de P.Value kolom door 1, zodat deze genen onderaan de selectie komen
+  res$P.Value[is.na(res$P.Value)] <- 1
+ 
+  # Zet de resultaten om naar een data.frame en filter op P.Value en logFC
+  res_df <- as.data.frame(res)
+  filtered_res <- res_df[res_df$P.Value < 0.05 & abs(res_df$logFC) > 1, ]
+ 
+  # Sorteer op P.Value en selecteer maximaal 3 genen
+  filtered_res <- filtered_res[order(filtered_res$P.Value), ]
+  top_genes <- head(filtered_res, 3)
+ 
+  # Controleer of er genen zijn gevonden
+  if (nrow(top_genes) == 0) {
+    cat("Geen significante genen gevonden voor", comparison, "\n")
+    return(NULL)
+  } else {
+    cat("genes")
+    }
+    return(data.frame(Comparison = comparison, Gene = top_genes$gene_id, ProteinID = top_genes$protein))
+}
+
+
+# Loop door elke vergelijking in de results_list
+for (comparison in names(results_list_log)) {
+  res_top_Genes <- results_list_log[[comparison]]
+  top_Genes <- select_top_Genes(res_top_Genes, comparison)
+ 
+  if (!is.null(top_Genes)) {
+    top_Genes_list_full[[comparison]] <- top_Genes
+  }
+}
+
+# Sla de volledige lijst op en controleer
+if (length(top_Genes_list_full) > 0) {
+  full_list <- do.call(rbind, top_Genes_list_full)
+  write.csv(full_list, file = "I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/2.unbiased_proteomics/results/top_Genes/vul_top_3_genes.csv", row.names = FALSE)
+} else {
+  cat("De lijst is leeg\n")
+}
+
+# Maak een lijst met unieke genen en sla deze op
+if (exists("full_list")) {
+  unique_full_list <- full_list[!duplicated(full_list$Gene), ]
+  write.csv(unique_full_list, file = "I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/2.unbiased_proteomics/results/top_Genes/unique_vul_top_3_genes.csv", row.names = FALSE)
+} else {
+  cat("Geen data om unieke genenlijst te maken\n")
+}
+
+```
+
+
+# ma top Genes
+
+```{r}
+top_Genes_list_full <- list()
+
+# Functie om de top 3 genen te selecteren
+select_top_Genes <- function(res, comparison) {
+  # Sorteer de resultaten op absolute logFC in aflopende volgorde
+  res_ma <- res[order(abs(res$logFC), decreasing = TRUE), ]
+ 
+  # Selecteer de top 3 genen (rownames)
+  top_3_genes_ma <- head(rownames(res_ma), 3)
+  p
+ 
+  # Controleer of er genen zijn gevonden
+  if (length(top_3_genes_ma) == 0) {
+    cat("Geen significante genen gevonden voor", comparison, "\n")
+    print(length(top_3_genes_ma))
+    return(NULL)
+  }
+ 
+  # Creëer een data.frame met de top 3 genen
+  return(data.frame(
+    Comparison = comparison,
+    Gene_num = top_3_genes_ma,
+    Gene = res_ma[top_3_genes_ma, "gene_id"],
+    ProteinID = res_ma[top_3_genes_ma, "protein"],
+    stringsAsFactors = FALSE
+  ))
+}
+
+# Loop door elke vergelijking in de results_list
+for (comparison in names(results_list_log)) {
+  res_top_Genes <- results_list_log[[comparison]]
+  top_Genes <- select_top_Genes(res_top_Genes, comparison)
+ 
+  if (!is.null(top_Genes)) {
+    top_Genes_list_full[[comparison]] <- top_Genes
+  }
+}
+
+# Combineer de resultaten in één data.frame
+if (length(top_Genes_list_full) > 0) {
+  full_list <- do.call(rbind, top_Genes_list_full)
+  write.csv(full_list, file = "I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/2.unbiased_proteomics/results/top_Genes/ma_top_3_genes.csv", row.names = FALSE)
+} else {
+  cat("De lijst is leeg\n")
+}
+
+# Maak een lijst met unieke genen en sla deze op
+if (exists("full_list")) {
+  unique_full_list <- full_list[!duplicated(full_list$Gene), ]
+  write.csv(unique_full_list, file = "I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/2.unbiased_proteomics/results/top_Genes/unique_ma_top_3_genes.csv", row.names = FALSE)
+} else {
+  cat("Geen data om unieke genenlijst te maken\n")
+}
+
+```
+
+
+# comparison ma and vul 
+
+
+```{r}
+unique_genes_vul <- read.csv("I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/2.unbiased_proteomics/results/top_genes/unique_vul_top_3_genes.csv")
+unique_genes_ma <- read.csv("I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/2.unbiased_proteomics/results/top_genes/unique_ma_top_3_genes.csv")
+
+
+
+overlapping_genes <- intersect(unique_genes_vul$Gene, unique_genes_ma$Gene)
+overlapping_genes
+  
+#genes only in vulcano
+only_vulcano <- setdiff(unique_genes_vul$Gene, unique_genes_ma$Gene)
+only_vulcano
+
+#genes only in ma 
+only_ma <- setdiff(unique_genes_ma$Gene, unique_genes_vul$Gene)
+only_ma
+
+cat("amount overlapping genes: ", length(overlapping_genes), "\n")
+cat("amount overlapping genes: ", length(only_vulcano), "\n")
+cat("amount overlapping genes: ", length(only_ma), "\n")
+  
+
+```
+
+
+
+# counts per Gene
+
+```{r}
+
+# Functie om abundances toe te voegen aan unieke genen
+add_abundances_to_unique_Genes <- function(unique_Genes, abundance_data) {
+  # Controleer of abundance_data een matrix is en zet deze om naar een tibble
+  if (is.matrix(abundance_data)) {
+    abundance_data <- as.data.frame(abundance_data) %>%
+      rownames_to_column(var = "ProteinID")
+  }
+ 
+  # Controleer of de kolom "ProteinID" aanwezig is
+  if (!"ProteinID" %in% colnames(abundance_data)) {
+    stop("Kolom 'ProteinID' ontbreekt in abundance_data.")
+  }
+ 
+  # Join uitvoeren
+  final_result <- unique_Genes %>%
+    left_join(abundance_data, by = "ProteinID")
+  
+  final_def <- final_result[!duplicated(final_result$Gene), ]
+ 
+  return(final_def)
+}
+
+# Inladen van de unieke genenlijst
+unique_Genes <- read_csv(
+  "I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/2.unbiased_proteomics/results/top_Genes/vul_top_3_genes.csv"
+)
+
+# Voeg abundances toe aan unieke genenlijst
+unique_Genes_with_abundances <- add_abundances_to_unique_Genes(unique_Genes, protein_data_logged)
+
+# Sla het resultaat op
+write_csv(
+  unique_Genes_with_abundances,
+  "I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/2.unbiased_proteomics/results/top_Genes/unique_Genes_with_abundances.csv"
+)
+
+# Data transformeren naar long-formaat
+unique_Genes_with_abundances_long <- unique_Genes_with_abundances %>%
+  pivot_longer(
+    cols = -c(Comparison, Gene, ProteinID),
+    names_to = "Condition",
+    values_to = "Abundance"
+  ) %>%
+  mutate(Condition = sub("^[0-9]+\\.[0-9]+\\.", "", Condition))
+
+# Controleer de structuur van de getransformeerde data
+head(unique_Genes_with_abundances_long)
+
+# Directory voor de plots
+output_directory <- "I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/2.unbiased_proteomics/results/counts_per_Gene/"
+
+if (!dir.exists(output_directory)) {
+  dir.create(output_directory, recursive = TRUE)
+}
+
+
+custom_colors <- c(
+  "unstimulated" = "blue",
+  "aCD3" = "#000000",
+  "aCD3.aCD27" = "#00A651",
+  "aCD3.a4_1BB" = "orange",
+  "aCD3.aCD28" = "#0072BC",
+  "aCD3.aCD27.aCD28" = "#8A2BE2",
+  "aCD3.aCD28.a4_1BB" = "#ED1C24"
+)
+
+condition_order <- c("unstimulated", "aCD3", "aCD3.aCD27", "aCD3.a4_1BB",
+                                "aCD3.aCD28", "aCD3.aCD27.aCD28", "aCD3.aCD28.a4_1BB")
+
+
+unique_Genes_with_abundances_long <- unique_Genes_with_abundances_long %>%
+  mutate(Condition = factor(Condition, levels = condition_order))
+
+
+# Maak plots voor elke unieke gene
+unique_Genes_with_abundances_long %>%
+  group_split(Gene) %>%
+  walk(function(Gene_data) {
+    Gene <- Gene_data$Gene[1]  # Neem de eerste waarde van de kolom Gene
+   
+    plot_abundance <- ggplot(Gene_data, aes(x = Condition, y = Abundance)) +
+      geom_jitter(width = 0.1, aes(color = Condition), size = 2) +
+      geom_boxplot(alpha = 0.2) +
+      scale_color_manual(values = custom_colors) + 
+      ggtitle(paste("Protein: ", Gene)) +
+      theme_bw() +
+      theme(
+        axis.text.x = element_text(size = 10, angle = 45, hjust = 1)
+      )
+   
+    ggsave(
+      filename = file.path(output_directory, paste0(Gene, "_abundancePlot.png")),
+      plot = plot_abundance,
+      width = 8,
+      height = 6
+    )
+  })
+
+cat("Abundance plots succesvol gegenereerd voor alle unieke genen.\n")
+
+```
+
+
+#heatmap unique Genes
+
+```{r}
+
+# select data 
+gene <- unique_genes_vul$Gene
+
+protein_gene <- read.xlsx("I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/2.unbiased_proteomics/data/P1491 - Scaled Abundances (simplified).xlsx", sheet = 1)
+
+rownames(protein_gene) <- protein_gene$UniProt.Accession
+
+protein_gene <- protein_gene %>%
+  select(-c(1:2, 4:30))
+
+protein_gene <- protein_gene %>% rownames_to_column(var = "Protein")
+
+protein_log_gene <- as.data.frame(protein_data_logged)
+protein_log_gene <- protein_log_gene %>% rownames_to_column(var = "Protein")
+
+protein_log_gene_done <- merge(protein_log_gene, protein_gene, by = "Protein")
+rownames(protein_log_gene_done) <- protein_log_gene_done$Protein
+
+
+selected_data <- protein_log_gene_done %>%
+  filter(protein_log_gene_done$Gene.Symbol %in% gene)
+
+rownames(selected_data) <- selected_data$Gene.Symbol
+
+selected_data <- selected_data %>%
+  select(-c(1, 23))
+
+#name col 
+
+colnames(selected_data) <- protein_metadata$Stimulation.condition[match(colnames(selected_data), protein_metadata$row_data)]
+
+#z-score 
+library(pheatmap)
+
+z_score_data <- t(scale(t(selected_data)))
+
+
+
+pheatmap(z_score_data, 
+         cluster_rows = TRUE,
+         cluster_cols = TRUE,
+         fontsize_row = 6,
+         fontsize_col = 8,
+         main = "heatmap z-score - clustered",
+         color = colorRampPalette(c("blue", "white", "red"))(100))
+
+pheatmap(z_score_data, 
+         cluster_rows = FALSE,
+         cluster_cols = FALSE,
+         fontsize_row = 6,
+         fontsize_col = 8,
+         main = "heatmap z-score - non clustered",
+         color = colorRampPalette(c("blue", "white", "red"))(100))
+
+
+#scaled+log
+
+pheatmap(selected_data, 
+         cluster_rows = FALSE,
+         cluster_cols = FALSE,
+         fontsize_row = 6,
+         fontsize_col = 8,
+         main = "heatmap log + scaled - non clustered",
+         color = colorRampPalette(c("blue", "white", "red"))(100))
+
+
+pheatmap(selected_data, 
+         cluster_rows = TRUE,
+         cluster_cols = TRUE,
+          fontsize_row = 6,
+         fontsize_col = 8,
+         main = "heatmap log + scaled - clustered",
+         color = colorRampPalette(c("blue", "white", "red"))(100))
+
+
+pheatmap(selected_data,
+         scale = "row",
+         clustering_distance_rows = "euclidean",
+         clustering_distance_cols = "euclidean",
+         cluster_rows = FALSE,
+         cluster_cols = FALSE,
+         fontsize_row = 6,
+         fontsize_col = 8,
+         main = "heatmap log + scaled - non clustered - euc",
+         color = colorRampPalette(c("blue", "white", "red"))(100))
+
+
+pheatmap(selected_data,
+         scale = "row",
+         clustering_distance_rows = "euclidean",
+         clustering_distance_cols = "euclidean",
+         cluster_rows = TRUE,
+         cluster_cols = TRUE,
+          fontsize_row = 6,
+         fontsize_col = 8,
+         main = "heatmap log + scaled - clustered - euc",
+         color = colorRampPalette(c("blue", "white", "red"))(100))
+
+```
+
+
+#heatmap condxcond using euclidean distance
+
+```{r}
+cond_distance <- dist(t(protein_data_logged),method = "euclidean")
+
+distance_matrix <- as.matrix(cond_distance)
+
+rownames(distance_matrix) <- protein_metadata$Stimulation.condition
+colnames(distance_matrix) <- protein_metadata$Stimulation.condition
+
+
+pheatmap(distance_matrix,
+         cluster_rows = TRUE,
+         cluster_cols = TRUE,
+         fontsize_row = 6,
+         fontsize_col = 8,
+         main = "condxcond - clustered - euc",
+         color = colorRampPalette(c("blue", "white", "red"))(100))
+
+
+pheatmap(distance_matrix,
+         cluster_rows = FALSE,
+         cluster_cols = FALSE,
+         fontsize_row = 6,
+         fontsize_col = 8,
+         main = "condxcond - non-clustered - euc",
+         color = colorRampPalette(c("blue", "white", "red"))(100))
+
+```
+
+
+#heatmap comp x unique x l2fc 
+
+
+```{r}
+logfoldchange_matrix <- matrix(NA, nrow = length(unique_genes_vul$Gene), ncol = length(results_list_log))
+
+rownames(logfoldchange_matrix) <- unique_genes_vul$ProteinID
+colnames(logfoldchange_matrix) <- names(results_list_log)
+
+for (i in seq_along(results_list_log)) { 
+  comparison <-results_list_log[[i]]
+  for (gene in unique_genes_vul$ProteinID) { 
+    if (gene %in% comparison$protein){
+      log2fc_value <- comparison[comparison$protein == gene, "logFC"]
+      logfoldchange_matrix[gene, i] <- log2fc_value
+    }
+  }
+}
+
+# to do: insert check 
+
+logfoldchange_matrix_transposed <- t(logfoldchange_matrix)
+
+pheatmap(logfoldchange_matrix_transposed,
+         cluster_rows = FALSE,
+         cluster_cols = FALSE,
+         fontsize_row = 6,
+         fontsize_col = 8,
+         main = "comp x l2fc - non-clustered ",
+         color = colorRampPalette(c("blue", "white", "red"))(100))
+
+
+pheatmap(logfoldchange_matrix_transposed,
+         cluster_rows = TRUE,
+         cluster_cols = TRUE,
+         fontsize_row = 6,
+         fontsize_col = 8,
+         main = "comp x l2fc - clustered ",
+         color = colorRampPalette(c("blue", "white", "red"))(100))
+
+
+```
+

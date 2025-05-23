@@ -1,0 +1,428 @@
+---
+title: "Limma_def"
+output: html_notebook
+---
+
+First we open the different libraries.
+
+```{r}
+library(openxlsx)
+library(sva)
+library(MSnbase)
+library(limma)
+library(dplyr)
+library(impute)
+library(preprocessCore)
+library(tidyverse)
+library(ggrepel)
+library(ggplot2)
+```
+
+We load in our data, and give the rownames the uniprot accesion names. Than we select the relevant columns for our research.
+
+```{r}
+protein_data <- read.xlsx("I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/2.unbiased_proteomics/data/P1491 - Scaled Abundances (simplified).xlsx", sheet = 1)
+
+rownames(protein_data) <- protein_data$UniProt.Accession
+
+protein_data <- protein_data %>%
+  select(-c(1:3, 25:30))
+
+```
+
+Than we load in the metadata and give the rownames the sample ids the same as the column names in protein_data
+
+```{r}
+protein_metadata <- read.xlsx("I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/2.unbiased_proteomics/data/metadata2.xlsx", sheet = 1)
+protein_metadata$row_data <- gsub("-", "_", protein_metadata$row_data)
+rownames(protein_metadata) <- protein_metadata$row_data
+print(protein_metadata)
+```
+
+We cleaned the colnames of the protein data such that only the condition is kept. We also cleaned the - in the metadata for _, for coding purposes.
+
+```{r}
+
+colnames(protein_data) <- gsub("-", "_", colnames(protein_data))
+protein_metadata$Stimulation.condition <- gsub("-", "_", protein_metadata$Stimulation.condition)
+protein_metadata$Stimulation.condition <- gsub("\\s*\\+\\s*", "_", protein_metadata$Stimulation.condition)
+head(protein_data)
+head(protein_metadata)
+```
+## Change metadata and protein names as rnaseq. 
+
+```{r}
+colnames(protein_data)[colnames(protein_data) == "6.1.aCD3.aCD28.aCD27"] <- "6.1.aCD3.aCD27.aCD28"
+colnames(protein_data)[colnames(protein_data) == "6.2.aCD3.aCD28.aCD27"] <- "6.2.aCD3.aCD27.aCD28"
+colnames(protein_data)[colnames(protein_data) == "6.3.aCD3.aCD28.aCD27"] <- "6.3.aCD3.aCD27.aCD28"
+
+rownames(protein_metadata)[rownames(protein_metadata) == "6.1.aCD3.aCD28.aCD27"] <- "6.1.aCD3.aCD27.aCD28"
+rownames(protein_metadata)[rownames(protein_metadata) == "6.2.aCD3.aCD28.aCD27"] <- "6.2.aCD3.aCD27.aCD28"
+rownames(protein_metadata)[rownames(protein_metadata) == "6.3.aCD3.aCD28.aCD27"] <- "6.3.aCD3.aCD27.aCD28"
+
+protein_metadata$Stimulation.condition <- gsub("aCD3_aCD28_aCD27", "aCD3_aCD27_aCD28", protein_metadata$Stimulation.condition)
+
+protein_metadata$row_data <- gsub("6.1.aCD3.aCD28.aCD27", "6.1.aCD3.aCD27.aCD28", protein_metadata$row_data)
+protein_metadata$row_data <- gsub("6.2.aCD3.aCD28.aCD27", "6.2.aCD3.aCD27.aCD28", protein_metadata$row_data)
+protein_metadata$row_data <- gsub("6.3.aCD3.aCD28.aCD27", "6.3.aCD3.aCD27.aCD28", protein_metadata$row_data)
+
+
+print(protein_metadata$row_dat)
+
+
+```
+
+```{r}
+protein_metadata <- protein_metadata[colnames(protein_data), ]
+all(colnames(protein_data) %in% rownames(protein_metadata))
+all(colnames(protein_data) == rownames(protein_metadata))
+```
+
+We filtered the proteins which shows to much missing values (50%), to avoid noise. ## can chance this 
+
+```{r}
+ # print(sum(is.na(protein_data)))
+# 
+# threshold <- 0.7 * ncol(protein_data)
+# protein_data_filtered <- protein_data[rowSums(is.na(protein_data)) <= (ncol(protein_data) - threshold), ]
+# 
+# print(sum(is.na(protein_data_filtered)))
+
+# data_matrix <- as.matrix(protein_data)
+# protein_data_filtered <- impute.knn(data_matrix)$data
+# print(sum(is.na(protein_data_filtered)))
+
+proteomics_filtered <- protein_data[rowSums(is.na(protein_data))/ncol(protein_data) <= 0.5,]
+missing_filtered <- sum(is.na(proteomics_filtered))
+
+print(missing_filtered)
+
+#impute using mnar 
+# min_value <- min(proteomics_filtered, na.rm = TRUE)
+# proteomics_imputed <- proteomics_filtered
+# proteomics_imputed[is.na(proteomics_imputed)] <- min_value * 0.5
+
+#impute using normal distribution width = 0.3 and shift = 1.8
+
+set.seed(42)
+  
+shift <- 1.8
+width <- 0.3
+
+protein_data_imputed <- t(apply(proteomics_filtered, 1, function(x) {
+  na_index <- is.na(x)
+  if (any(na_index)) {
+    row_mean <- mean(x, na.rm = TRUE) - shift
+    row_sd <- sd(x, na.rm = TRUE) * width
+    x[na_index] <- rnorm(sum(na_index), mean = row_mean, sd = row_sd)
+  }
+  return(x)
+}))
+
+
+missing_imputing <- sum(is.na(protein_data_imputed))
+print(missing_imputing)
+```
+
+
+After this we logged scaled our dataset to make a normal distribution of the dataset. +1 is for not having log(0), and did the analysis again.
+
+```{r}
+protein_data_logged <- log2(protein_data_imputed + 1)
+```
+
+
+first we needed to make clear what our conditions are, this needs to be factors to make use of linear regression.
+
+```{r}
+condition <- factor(protein_metadata$Stimulation.condition)
+levels(condition) <- make.names(levels(condition))
+print(levels(condition))
+```
+
+We make a design matrix so that every condition is an apart column, so the effects of every condition can be estimated by the lineair model.
+
+```{r}
+design <- model.matrix(~0 + condition)
+colnames(design) <- levels(condition)
+```
+
+Now we are going to use limma. the lineair model will be fitted against our data. it will help eveluating the differences between our conditions statisically.
+
+```{r}
+fit_log <- lmFit(protein_data_logged, design)
+```
+
+We make contrast to get the results for every comparison between our conditions (21 in total). eBayes is to get more statistic power because we work with protoemics and multiple testing.
+
+```{r}
+condition_levels <- levels(condition)
+
+# contrast_combinations <- combn(condition_levels, 2, simplify = FALSE)
+# 
+# contrast_list_log <- list()
+# 
+# for (comb in contrast_combinations) {
+#   contrast_name <- paste(comb[1], "_vs_", comb[2], sep = "")
+#   contrast_expression <- paste(comb[1], "-", comb[2])
+#   contrast_list_log[[contrast_name]] <- contrast_expression
+# }
+# 
+# 
+
+my_contrast <- list(
+  c("Unstim", "aCD3"),
+  c("Unstim", "aCD3_aCD28"),
+  c("Unstim", "aCD3_aCD28_a4_1BB"),
+  c("Unstim", "aCD3_aCD27"),
+  c("Unstim", "aCD3_aCD27_aCD28"),
+  c("Unstim", "aCD3_a4_1BB"),
+  c("aCD3", "aCD3_aCD28"),
+  c("aCD3", "aCD3_aCD28_a4_1BB"),
+  c("aCD3", "aCD3_aCD27"),
+  c("aCD3", "aCD3_aCD27_aCD28"),
+  c("aCD3", "aCD3_a4_1BB"),
+  c("aCD3_aCD28", "aCD3_aCD28_a4_1BB"),
+  c("aCD3_aCD28", "aCD3_aCD27_aCD28"),
+  c("aCD3_aCD27", "aCD3_aCD28"),
+  c("aCD3_aCD27", "aCD3_aCD28_a4_1BB"),
+  c("aCD3_aCD27", "aCD3_aCD27_aCD28"),
+  c("aCD3_aCD27", "aCD3_a4_1BB"),
+  c("aCD3_aCD27_aCD28", "aCD3_aCD28_a4_1BB"),
+  c("aCD3_a4_1BB", "aCD3_aCD28"),
+  c("aCD3_a4_1BB", "aCD3_aCD27_aCD28"),
+  c("aCD3_a4_1BB", "aCD3_aCD28_a4_1BB")
+)
+
+contrast_list_log <- list()
+
+for(comb in my_contrast) {
+  contrast_name <- paste(comb[1], "_vs_", comb[2], sep = "")
+  contrast_expression <- paste(comb[1], "-", comb[2])
+  contrast_list_log[[contrast_name]] <- contrast_expression
+}
+
+contrast_formulas_log <- unlist(contrast_list_log)
+contrast.matrix_log <- makeContrasts(contrasts = contrast_formulas_log, levels = design)
+
+fit2_log <- contrasts.fit(fit_log, contrast.matrix_log)
+fit2_log <- eBayes(fit2_log)
+```
+
+
+## For the vulcano plot we need to add the corresponding gene name to the protein name ##. 
+
+```{r}
+protein_gene <- read.xlsx("I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/2.unbiased_proteomics/data/P1491 - Scaled Abundances (simplified).xlsx", sheet = 1)
+
+anno <- protein_gene[,c(1,3)]
+colnames(anno)
+colnames(anno)[colnames(anno) == "UniProt.Accession"] <- "protein"
+colnames(anno)[colnames(anno) == "Gene.Symbol"] <- "gene_id"
+colnames(anno)
+```
+
+
+After this we wanted to save every comparison result in a resul_list to use for further analysis. We also wanted to save the results as documents on the computer.
+
+
+```{r}
+results_list_log <- list()
+
+for (contrast_name in colnames(contrast.matrix_log)) {
+  result_log <- topTable(fit2_log, coef = contrast_name, adjust = "fdr", number = Inf)
+  result_log$protein <- rownames(result_log)
+  result_log <- merge(result_log, anno, by = "protein", all.x = TRUE)
+  results_list_log[[contrast_name]] <- result_log
+
+  filename <- paste0("I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/2.unbiased_proteomics/results/results_limma/", contrast_name, "_results.csv")
+  write.csv(result_log, file = filename, row.names = FALSE)
+  print(paste("Results for:", contrast_name))
+  print(head(result_log))
+}
+```
+
+T: calculated for every protein, vale about the difference between two condition, corrected for variance of the data, it is also used for calculating the p-value. B: log-odds-score. The probability about being DE.
+
+After this we wanted to make a PCA plot, to look at our data. We first did a PCA, using the prcomp function.
+
+```{r}
+pca_result_log <- prcomp(t(protein_data_logged), center = TRUE, scale. = TRUE)
+```
+
+We calculated the explained variance.
+
+```{r}
+explained_variance_filtered_log <- pca_result_log$sdev^2 / sum(pca_result_log$sdev^2)
+explained_variance_df_log <- data.frame(Principal_Component = paste0("PC", 1:length(explained_variance_filtered_log)),
+                                    Variance_Explained = explained_variance_filtered_log)
+
+print(explained_variance_df_log)
+```
+
+We plotted the explained variance to see see how much PC's to use. ##fix de goede volgorde ##
+
+```{r}
+library(ggplot2)
+explained_variance_df_log <- explained_variance_df_log %>%
+  mutate(Principal_Component = factor(Principal_Component, levels = Principal_Component[order(-Variance_Explained)]))
+
+ggplot(explained_variance_df_log, aes(x = Principal_Component, y = Variance_Explained)) +
+  geom_bar(stat = "identity") +
+  ggtitle("Explained Variance per Principal Component") +
+  xlab("Principal Component") +
+  ylab("Variance Explained") +
+  theme_minimal()
+
+```
+
+We made a PCA of the first two PC's.
+
+```{r}
+
+custom_colors <- c(
+  "Unstim" = "blue",
+  "aCD3" = "#000000",
+  "aCD3_aCD27" = "#00A651",
+  "aCD3_a4_1BB" = "orange",
+  "aCD3_aCD28" = "#0072BC",
+  "aCD3_aCD27_aCD28" = "#8A2BE2",
+  "aCD3_aCD28_a4_1BB" = "#ED1C24"
+)
+
+pca_df_log <- data.frame(PC1 = pca_result_log$x[,1],
+                     PC2 = pca_result_log$x[,2],
+                     Condition = factor(protein_metadata$Stimulation.condition,
+                     levels = c("Unstim", "aCD3", "aCD3_aCD27", "aCD3_a4_1BB",
+                                "aCD3_aCD28", "aCD3_aCD27_aCD28", "aCD3_aCD28_a4_1BB")))
+
+
+library(ggplot2)
+ggplot(pca_df_log, aes(x = PC1, y = PC2, color = Condition)) +
+  geom_point(size = 4) +
+  ggtitle("PCA Plot of the log data") +
+  xlab(paste0("PC1 (", round(explained_variance_df_log$Variance_Explained[1] * 100, 1), "% variance)")) +
+  ylab(paste0("PC2 (", round(explained_variance_df_log$Variance_Explained[2] * 100, 1), "% variance)")) +
+  theme_minimal() + 
+  scale_color_manual(values = custom_colors)
+
+```
+
+
+```{r}
+
+# Eerst bepalen we de aslimieten, zoals eerder:
+x_min <- floor(min(pca_df_log2$PC1) / 10) * 10
+x_max <- ceiling(max(pca_df_log2$PC1) / 10) * 10
+y_min <- floor(min(pca_df_log2$PC2) / 10) * 10
+y_max <- ceiling(max(pca_df_log2$PC2) / 10) * 10
+
+# Bereken de hoofd-breaks per as (elke 10 eenheden)
+x_breaks <- seq(x_min, x_max, by = 10)
+y_breaks <- seq(y_min, y_max, by = 10)
+
+# Maak labels: om en om een label, maar zorg dat 0 altijd gelabeld is.
+x_labels <- ifelse(abs(x_breaks) %% 20 == 0, x_breaks, "")
+y_labels <- ifelse(abs(y_breaks) %% 20 == 0, y_breaks, "")
+
+
+custom_colors <- c(
+  "aCD3" = "grey",
+  "aCD3_aCD27" = "#00A651",
+  "aCD3_a4_1BB" = "orange",
+  "aCD3_aCD28" = "#0072BC",
+  "aCD3_aCD27_aCD28" = "#8A2BE2",
+  "aCD3_aCD28_a4_1BB" = "#ED1C24"
+)
+
+pca_df_log <- data.frame(PC1 = pca_result_log$x[,1],
+                     PC2 = pca_result_log$x[,2],
+                     Condition = factor(protein_metadata$Stimulation.condition,
+                     levels = c("aCD3", "aCD3_aCD27", "aCD3_a4_1BB",
+                                "aCD3_aCD28", "aCD3_aCD27_aCD28", "aCD3_aCD28_a4_1BB")))
+
+pca_df_log2 <- pca_df_log %>% filter(Condition != "Unstim")
+
+p <- ggplot(pca_df_log2, aes(x = PC1, y = PC2, fill = Condition)) +
+  geom_point(size = 4, shape = 21, color = "black", stroke = 1) +
+  ggtitle("Global proteome") +
+  xlab(paste0("PC1 (", round(explained_variance_df_log$Variance_Explained[1] * 100, 1), "% variance)")) +
+  ylab(paste0("PC2 (", round(explained_variance_df_log$Variance_Explained[2] * 100, 1), "% variance)")) +
+  theme_bw() + 
+  theme(panel.grid = element_blank()) +
+  scale_fill_manual(values = custom_colors,
+                     labels = c("aCD3" = "aCD3",
+                                "aCD3_aCD27" = "aCD3 + aCD27",
+                                "aCD3_a4_1BB" = "aCD3 + aCD137",
+                                "aCD3_aCD28" = "aCD3 + aCD28",
+                                "aCD3_aCD27_aCD28" = "aCD3 + aCD27 + aCD28",
+                                "aCD3_aCD28_a4_1BB" = "aCD3 + aCD28 + aCD137"), guide = guide_legend(override.aes = list(color = "black", shape = 21, stroke = 1.2))) +
+  guides(fill = guide_legend(title = NULL)) + 
+  scale_x_continuous(
+    limits = c(x_min, x_max),
+    breaks = x_breaks,           # Hoofd-ticks elke 10 eenheden
+    labels = x_labels,           # Om en om een label, met 0 altijd zichtbaar
+    minor_breaks = seq(x_min, x_max, by = 5)
+  ) +
+  scale_y_continuous(
+    limits = c(y_min, y_max),
+    breaks = y_breaks,
+    labels = y_labels,
+    minor_breaks = seq(y_min, y_max, by = 5)
+  )
+
+
+p
+
+ggsave("I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/2.unbiased_proteomics/results/pca/plot_m.png", plot = p)
+
+
+# Definieer de bestandsnamen en paden
+output_dir <- "I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/figures/PCA/"
+output_base <- paste0(output_dir, "PCA_plot_proteo")
+
+# Sla op als PNG (hoge resolutie)
+ggsave(paste0(output_base, ".png"), plot = p, width = 8, height = 6, dpi = 300)
+
+# Sla op als SVG
+ggsave(paste0(output_base, ".svg"), plot = p, width = 8, height = 6)
+
+
+# Sla op als EPS (voor vectorformaat)
+ggsave(paste0(output_base, ".eps"), plot = p, width = 8, height = 6, device = cairo_ps)
+
+```
+
+
+Quality check: distribution 
+
+```{r}
+
+data_long <- data.frame(value = as.vector(protein_data_logged))
+ggplot(data_long, aes( x = value)) +
+  geom_density() +
+  ggtitle("density tmt")+
+  theme_bw()
+
+for (contrast_name in names(results_list_log)){
+  
+
+  result <- results_list_log[[contrast_name]]
+  
+  
+  p1 <- ggplot(result, aes(x= AveExpr)) + 
+    geom_density() +
+    ggtitle(paste("density aveexpr_", contrast_name))+
+    theme_bw()
+  
+  print(p1)
+  
+
+  hist(result$logFC, breaks = 50, main = paste("hist log2fc_", contrast_name), xlab = "logfc")
+  boxplot(result$logFC, main = paste("boxplot log2fc_", contrast_name))
+
+}
+```
+
+
+

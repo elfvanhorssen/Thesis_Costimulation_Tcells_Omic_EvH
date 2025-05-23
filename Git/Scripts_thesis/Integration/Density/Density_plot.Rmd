@@ -1,0 +1,304 @@
+---
+title: "Density plot"
+output: html_notebook
+---
+
+```{r}
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(tidyr)
+library(htmlwidgets)
+```
+
+z-scores
+
+```{r}
+#z-score per gene over condition in rnaaseq 
+
+rnaseq_zscore <- rnaseq_summary %>% 
+  group_by(gene_id) %>% 
+  mutate(
+    z_score_fpkm = scale(mean_log2_FPKM, center = TRUE, scale = TRUE)[,1]
+  ) %>%
+  ungroup()
+
+head(rnaseq_zscore)
+
+
+#z-score per gene over conditions proteomics 
+
+proteomics_zscore <- data_summary %>% 
+  group_by(ProteinID) %>% 
+  mutate(
+    z_score_ibaq = scale(mean_log2_iBAQ, center = TRUE, scale = TRUE)[,1]
+  ) %>%
+  ungroup()
+
+head(proteomics_zscore)
+
+sum(is.na(rnaseq_zscore$z_score_fpkm))
+sum(is.na(proteomics_zscore$z_score_ibaq))
+
+rnaseq_zscore <- rnaseq_zscore %>%
+  mutate(z_score_fpkm = ifelse(is.na(z_score_fpkm), 0, z_score_fpkm))
+
+proteomics_zscore <- proteomics_zscore %>%
+  mutate(z_score_ibaq = ifelse(is.na(z_score_ibaq), 0, z_score_ibaq))
+
+sum(is.na(rnaseq_zscore$z_score_fpkm))
+sum(is.na(proteomics_zscore$z_score_ibaq))
+```
+
+
+wide format? 
+
+selected genes
+
+```{r}
+library(dplyr)
+rnaseq_zscore$external_gene_name <- toupper(trimws(rnaseq_zscore$external_gene_name))
+proteomics_zscore$external_gene_name <- toupper(trimws(proteomics_zscore$external_gene_name))
+
+rnaseq_selected <- rnaseq_zscore %>%
+  filter(external_gene_name %in% same_genes)
+print(length(unique(rnaseq_selected$external_gene_name)))
+
+proteomics_selected <- proteomics_zscore %>%
+  filter(external_gene_name %in% same_genes)
+print(length(unique(proteomics_selected$external_gene_name)))
+
+same_genes <- as.data.frame(same_genes)
+library(writexl)
+write_xlsx(same_genes, "I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/figures/density/data/same_gene.xlsx")
+```
+
+
+density plot per condition 
+
+```{r}
+
+#Names from proteomics to rnaseq 
+
+proteomics_selected$Condition <- gsub("unstimulated", "Unstim", proteomics_selected$Condition)
+proteomics_selected$Condition <- gsub("aCD3.a4_1BB", "aCD3_a4_1BB", proteomics_selected$Condition)
+proteomics_selected$Condition <- gsub("aCD3.aCD27", "aCD3_aCD27", proteomics_selected$Condition)
+proteomics_selected$Condition <- gsub("aCD3.aCD28", "aCD3_aCD28", proteomics_selected$Condition)
+proteomics_selected$Condition <- gsub("aCD3.aCD28.a4_1BB", "aCD3_aCD28_a4_1BB", proteomics_selected$Condition)
+proteomics_selected$Condition <- gsub("aCD3.aCD27.aCD28", "aCD3_aCD27_aCD28", proteomics_selected$Condition)
+
+rnaseq_plot <- rnaseq_selected %>%
+  select(external_gene_name, Condition, z_score_fpkm)
+
+proteomics_plot <- proteomics_selected %>%
+  select(external_gene_name, Condition, z_score_ibaq)
+
+
+#combine data
+
+combined_z_scores <- inner_join(
+  rnaseq_plot,
+  proteomics_plot,
+  by = c("external_gene_name", "Condition")
+)
+
+head(combined_z_scores)
+
+
+```
+
+```{r}
+library(plotly)
+library(ggrepel)
+library(ggplot2)
+library(tidyverse)
+unique_conditions <- unique(combined_z_scores$Condition)
+
+for (cond in unique_conditions) {
+  data_cond <- combined_z_scores %>%
+    filter(Condition == cond)
+  
+  #bivariate density plot 
+  p1 <- ggplot(data_cond, aes(x = z_score_fpkm, y = z_score_ibaq)) + 
+    geom_density2d(color = "lightblue") + 
+    geom_point(alpha = 0.6, size = 1) +
+    theme_bw()+
+    labs(
+      title = paste("Bivariate density plot z-scores -", cond), 
+      x = "RNA-seq z-score FPKM",
+      y = "Proteomics Z-score iBAQ"
+    )
+  
+  ggsave(
+    filename = paste0("I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/3.unbiased_indirect_integration/results/density_plot/bivariate_density/more_genes", cond, ".png"),
+    plot = p1,
+    width = 8,
+    height = 6
+  )
+  
+
+  combined_plot_data <- data_cond %>% 
+    pivot_longer(
+      cols = c(z_score_fpkm, z_score_ibaq), 
+      names_to = "DataType",
+      values_to = "z_score"
+    ) %>%
+    mutate(
+      DataType = ifelse(DataType == "z_score_fpkm", "rnaseq", "proteomics")
+    )
+  
+   p3 <- ggplot(combined_plot_data, aes(x = z_score, fill = DataType)) + 
+    geom_density(alpha = 0.5) + 
+    theme_bw()+
+    labs(
+      title = paste("Combined_density -", cond), 
+      x = "z_score",
+      y = "Density",
+      fill = "Data Type"
+    )
+  
+  ggsave(
+    filename = paste0("I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/3.unbiased_indirect_integration/results/density_plot/combined_density/more_genes", cond, ".png"),
+    plot = p3,
+    width = 8,
+    height = 6
+  )
+  
+}
+```
+
+checks 
+
+```{r}
+# Loop door de condities heen
+for (cond in unique_conditions) {
+ 
+  # 1. Filter de data voor deze conditie
+  # 2. Verwijder NA's én niet-finite waarden
+  data_cond <- combined_z_scores %>%
+    filter(Condition == cond) %>%
+    # Verwijder rijen met NA:
+    drop_na(z_score_fpkm, z_score_ibaq) %>%
+    # Verwijder rijen met niet-finite waarden (Inf, -Inf, NaN):
+    filter(
+      is.finite(z_score_fpkm),
+      is.finite(z_score_ibaq)
+    ) %>%
+    mutate(
+      tooltip_text = paste0(
+        "Gene: ", external_gene_name,
+        "<br>z_score_fpkm: ", round(z_score_fpkm, 2),
+        "<br>z_score_ibaq: ", round(z_score_ibaq, 2)
+      )
+    )
+ 
+  # Kijk hoeveel rijen er overblijven
+  aantal_rijen <- nrow(data_cond)
+  message(paste0("Conditie '", cond, "' heeft ", aantal_rijen, " punten na filtering."))
+
+  # Als er helemaal niets overblijft, slaan we deze conditie over
+  if (aantal_rijen == 0) {
+    message("Geen data, deze conditie wordt overgeslagen.\n")
+    next
+  }
+ 
+  # Maak de basis-ggplot
+  p2 <- ggplot(data_cond, aes(
+    x = z_score_fpkm,
+    y = z_score_ibaq,
+    
+  )) +
+    geom_point(aes(text = tooltip_text), 
+               alpha = 0.6, size = 1, color = "blue") +  # Scatter plot
+    theme_bw() +
+    labs(
+      title = paste("Scatterplot with densitycontours -", cond),
+      x = "RNA-seq z-score FPKM",
+      y = "Proteomics Z-score iBAQ"
+    )
+ 
+  # Alleen density contours toevoegen als er voldoende punten zijn
+  # (Voor echte density heb je eigenlijk meer dan 2 punten nodig,
+  #  maar je kunt zelf bepalen vanaf welk minimum je contours wilt zien.)
+  if (aantal_rijen >= 3) {
+    p2 <- p2 + geom_density2d(color = "black")
+  } else {
+    message("Minder dan 3 punten, geen densitycontours toegevoegd.\n")
+  }
+
+  # Converteer naar interactieve plotly-plot
+  p_interactive <- ggplotly(p2, tooltip = "text")
+
+  # Sla op als HTML
+  htmlwidgets::saveWidget(
+    p_interactive,
+    file.path(
+      "I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/3.unbiased_indirect_integration/results/density_plot/interactive",
+      paste0(cond, ".html")
+    ),
+    selfcontained = TRUE
+  )
+ 
+  message(paste0("Interactieve plot voor '", cond, "' opgeslagen.\n"))
+}
+
+
+```
+
+
+
+
+```{r}
+
+library(ggrepel)
+
+for (cond in unique_conditions) {
+  data_cond <- combined_z_scores %>%
+    filter(Condition == cond)
+ 
+  # Definieer zelf wanneer iets een outlier is:
+  # Voorbeeld: |z-score| > 2
+  outliers_data <- data_cond %>%
+    filter((z_score_fpkm) < 0 & (z_score_ibaq) > 0.5 | (z_score_fpkm) > 0.5 & (z_score_ibaq) < 0)
+ 
+  p_label <- ggplot(data_cond, aes(x = z_score_fpkm, y = z_score_ibaq)) +
+    geom_point(alpha = 0.6, size = 1, color = "blue") +
+    geom_density2d(color = "black") +
+    xlim(-2,2) +
+    ylim(-2,2)+
+    # Label alleen de outliers
+    geom_text_repel(
+      data = outliers_data,
+      aes(label = external_gene_name),
+      size = 3,
+      box.padding = 0.3,
+      min.segment.length = 0
+    ) +
+    theme_bw() +
+    labs(
+      title = paste("Scatterplot met densitycontours -", cond),
+      x = "RNA-seq z-score FPKM",
+      y = "Proteomics Z-score iBAQ"
+    )
+ 
+  # Opslaan als .png
+  ggsave(
+    filename = paste0("I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/3.unbiased_indirect_integration/results/density_plot/scatter_with_contours/", cond, "_labelled.png"),
+    plot = p_label,
+    width = 8,
+    height = 6
+  )
+}
+
+```
+
+
+```{r}
+
+length(rnaseq_zscore$external_gene_name)
+length(proteomics_zscore$external_gene_name)
+
+genes_in_both <- intersect(rnaseq_zscore$external_gene_name, proteomics_zscore$external_gene_name)
+length(genes_in_both)
+```
+

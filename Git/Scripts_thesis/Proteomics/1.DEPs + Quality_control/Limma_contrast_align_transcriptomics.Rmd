@@ -1,0 +1,259 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+First we open the different libraries.
+
+```{r}
+library(openxlsx)
+library(sva)
+library(MSnbase)
+library(limma)
+library(dplyr)
+library(impute)
+library(preprocessCore)
+library(tidyverse)
+library(ggrepel)
+library(ggplot2)
+```
+
+We load in our data, and give the rownames the uniprot accesion names. Than we select the relevant columns for our research.
+
+```{r}
+protein_data <- read.xlsx("I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/2.unbiased_proteomics/data/P1491 - Scaled Abundances (simplified).xlsx", sheet = 1)
+
+rownames(protein_data) <- protein_data$UniProt.Accession
+
+protein_data <- protein_data %>%
+  select(-c(1:3, 25:30))
+
+```
+
+Than we load in the metadata and give the rownames the sample ids the same as the column names in protein_data
+
+```{r}
+protein_metadata <- read.xlsx("I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/2.unbiased_proteomics/data/metadata2.xlsx", sheet = 1)
+protein_metadata$row_data <- gsub("-", "_", protein_metadata$row_data)
+rownames(protein_metadata) <- protein_metadata$row_data
+print(protein_metadata)
+```
+
+We cleaned the colnames of the protein data such that only the condition is kept. We also cleaned the - in the metadata for _, for coding purposes.
+
+```{r}
+
+colnames(protein_data) <- gsub("-", "_", colnames(protein_data))
+protein_metadata$Stimulation.condition <- gsub("-", "_", protein_metadata$Stimulation.condition)
+protein_metadata$Stimulation.condition <- gsub("\\s*\\+\\s*", "_", protein_metadata$Stimulation.condition)
+head(protein_data)
+head(protein_metadata)
+```
+## Change metadata and protein names as rnaseq. 
+
+```{r}
+colnames(protein_data)[colnames(protein_data) == "6.1.aCD3.aCD28.aCD27"] <- "6.1.aCD3.aCD27.aCD28"
+colnames(protein_data)[colnames(protein_data) == "6.2.aCD3.aCD28.aCD27"] <- "6.2.aCD3.aCD27.aCD28"
+colnames(protein_data)[colnames(protein_data) == "6.3.aCD3.aCD28.aCD27"] <- "6.3.aCD3.aCD27.aCD28"
+
+rownames(protein_metadata)[rownames(protein_metadata) == "6.1.aCD3.aCD28.aCD27"] <- "6.1.aCD3.aCD27.aCD28"
+rownames(protein_metadata)[rownames(protein_metadata) == "6.2.aCD3.aCD28.aCD27"] <- "6.2.aCD3.aCD27.aCD28"
+rownames(protein_metadata)[rownames(protein_metadata) == "6.3.aCD3.aCD28.aCD27"] <- "6.3.aCD3.aCD27.aCD28"
+
+protein_metadata$Stimulation.condition <- gsub("aCD3_aCD28_aCD27", "aCD3_aCD27_aCD28", protein_metadata$Stimulation.condition)
+
+protein_metadata$row_data <- gsub("6.1.aCD3.aCD28.aCD27", "6.1.aCD3.aCD27.aCD28", protein_metadata$row_data)
+protein_metadata$row_data <- gsub("6.2.aCD3.aCD28.aCD27", "6.2.aCD3.aCD27.aCD28", protein_metadata$row_data)
+protein_metadata$row_data <- gsub("6.3.aCD3.aCD28.aCD27", "6.3.aCD3.aCD27.aCD28", protein_metadata$row_data)
+
+
+print(protein_metadata$row_dat)
+
+
+```
+
+```{r}
+protein_metadata <- protein_metadata[colnames(protein_data), ]
+all(colnames(protein_data) %in% rownames(protein_metadata))
+all(colnames(protein_data) == rownames(protein_metadata))
+```
+
+We filtered the proteins which shows to much missing values (50%), to avoid noise. ## can chance this 
+
+```{r}
+ # print(sum(is.na(protein_data)))
+# 
+# threshold <- 0.7 * ncol(protein_data)
+# protein_data_filtered <- protein_data[rowSums(is.na(protein_data)) <= (ncol(protein_data) - threshold), ]
+# 
+# print(sum(is.na(protein_data_filtered)))
+
+# data_matrix <- as.matrix(protein_data)
+# protein_data_filtered <- impute.knn(data_matrix)$data
+# print(sum(is.na(protein_data_filtered)))
+
+proteomics_filtered <- protein_data[rowSums(is.na(protein_data))/ncol(protein_data) <= 0.5,]
+missing_filtered <- sum(is.na(proteomics_filtered))
+
+print(missing_filtered)
+
+#impute using mnar 
+# min_value <- min(proteomics_filtered, na.rm = TRUE)
+# proteomics_imputed <- proteomics_filtered
+# proteomics_imputed[is.na(proteomics_imputed)] <- min_value * 0.5
+
+#impute using normal distribution width = 0.3 and shift = 1.8
+
+set.seed(42)
+  
+shift <- 1.8
+width <- 0.3
+
+protein_data_imputed <- t(apply(proteomics_filtered, 1, function(x) {
+  na_index <- is.na(x)
+  if (any(na_index)) {
+    row_mean <- mean(x, na.rm = TRUE) - shift
+    row_sd <- sd(x, na.rm = TRUE) * width
+    x[na_index] <- rnorm(sum(na_index), mean = row_mean, sd = row_sd)
+  }
+  return(x)
+}))
+
+
+missing_imputing <- sum(is.na(protein_data_imputed))
+print(missing_imputing)
+```
+
+
+After this we logged scaled our dataset to make a normal distribution of the dataset. +1 is for not having log(0), and did the analysis again.
+
+```{r}
+protein_data_logged <- log2(protein_data_imputed + 1)
+```
+
+
+first we needed to make clear what our conditions are, this needs to be factors to make use of linear regression.
+
+```{r}
+condition <- factor(protein_metadata$Stimulation.condition)
+levels(condition) <- make.names(levels(condition))
+print(levels(condition))
+```
+
+We make a design matrix so that every condition is an apart column, so the effects of every condition can be estimated by the lineair model.
+
+```{r}
+design <- model.matrix(~0 + condition)
+colnames(design) <- levels(condition)
+```
+
+Now we are going to use limma. the lineair model will be fitted against our data. it will help eveluating the differences between our conditions statisically.
+
+```{r}
+fit_log <- lmFit(protein_data_logged, design)
+```
+
+We make contrast to get the results for every comparison between our conditions (21 in total). eBayes is to get more statistic power because we work with protoemics and multiple testing.
+
+```{r}
+condition_levels <- levels(condition)
+
+# contrast_combinations <- combn(condition_levels, 2, simplify = FALSE)
+# 
+# contrast_list_log <- list()
+# 
+# for (comb in contrast_combinations) {
+#   contrast_name <- paste(comb[1], "_vs_", comb[2], sep = "")
+#   contrast_expression <- paste(comb[1], "-", comb[2])
+#   contrast_list_log[[contrast_name]] <- contrast_expression
+# }
+# 
+# 
+
+my_contrast <- list(
+  c("Unstim", "aCD3"),
+  c("Unstim", "aCD3_aCD28"),
+  c("Unstim", "aCD3_aCD28_a4_1BB"),
+  c("Unstim", "aCD3_aCD27"),
+  c("Unstim", "aCD3_aCD27_aCD28"),
+  c("Unstim", "aCD3_a4_1BB"),
+  c("aCD3", "aCD3_aCD28"),
+  c("aCD3", "aCD3_aCD28_a4_1BB"),
+  c("aCD3", "aCD3_aCD27"),
+  c("aCD3", "aCD3_aCD27_aCD28"),
+  c("aCD3", "aCD3_a4_1BB"),
+  c("aCD3_aCD28", "aCD3_aCD28_a4_1BB"),
+  c("aCD3_aCD28", "aCD3_aCD27_aCD28"),
+  c("aCD3_aCD27", "aCD3_aCD28"),
+  c("aCD3_aCD27", "aCD3_aCD28_a4_1BB"),
+  c("aCD3_aCD27", "aCD3_aCD27_aCD28"),
+  c("aCD3_aCD27", "aCD3_a4_1BB"),
+  c("aCD3_aCD27_aCD28", "aCD3_aCD28_a4_1BB"),
+  c("aCD3_a4_1BB", "aCD3_aCD28"),
+  c("aCD3_a4_1BB", "aCD3_aCD27_aCD28"),
+  c("aCD3_a4_1BB", "aCD3_aCD28_a4_1BB")
+)
+
+
+my_contrast <- lapply(my_contrast, function(x) rev(x))
+
+# Print the reversed contrasts
+print(my_contrast)
+
+
+contrast_list_log <- list()
+
+for(comb in my_contrast) {
+  contrast_name <- paste(comb[1], "_vs_", comb[2], sep = "")
+  contrast_expression <- paste(comb[1], "-", comb[2])
+  contrast_list_log[[contrast_name]] <- contrast_expression
+}
+
+contrast_formulas_log <- unlist(contrast_list_log)
+contrast.matrix_log <- makeContrasts(contrasts = contrast_formulas_log, levels = design)
+
+fit2_log <- contrasts.fit(fit_log, contrast.matrix_log)
+fit2_log <- eBayes(fit2_log)
+```
+
+
+## For the vulcano plot we need to add the corresponding gene name to the protein name ##. 
+
+```{r}
+protein_gene <- read.xlsx("I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/2.unbiased_proteomics/data/P1491 - Scaled Abundances (simplified).xlsx", sheet = 1)
+
+anno <- protein_gene[,c(1,3)]
+colnames(anno)
+colnames(anno)[colnames(anno) == "UniProt.Accession"] <- "protein"
+colnames(anno)[colnames(anno) == "Gene.Symbol"] <- "gene_id"
+colnames(anno)
+```
+
+
+After this we wanted to save every comparison result in a resul_list to use for further analysis. We also wanted to save the results as documents on the computer.
+
+
+```{r}
+results_list_log <- list()
+
+for (contrast_name in colnames(contrast.matrix_log)) {
+  result_log <- topTable(fit2_log, coef = contrast_name, adjust = "fdr", number = Inf)
+  result_log$protein <- rownames(result_log)
+  result_log <- merge(result_log, anno, by = "protein", all.x = TRUE)
+  results_list_log[[contrast_name]] <- result_log
+
+  filename <- paste0("I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/2.unbiased_proteomics/results/results_limma_inverse/", contrast_name, "_results.csv")
+  write.csv(result_log, file = filename, row.names = FALSE)
+  print(paste("Results for:", contrast_name))
+  print(head(result_log))
+}
+```
+
+T: calculated for every protein, vale about the difference between two condition, corrected for variance of the data, it is also used for calculating the p-value. B: log-odds-score. The probability about being DE.
+
+
+```{r}
+saveRDS(results_list_log, "I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/figures/R/data/result_list_log_prot.rds")
+
+```
+

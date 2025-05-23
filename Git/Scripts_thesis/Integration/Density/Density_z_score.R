@@ -1,4 +1,4 @@
-# Laad benodigde packages
+# packages
 library(ggplot2)
 library(dplyr)
 library(tidyr)
@@ -12,13 +12,12 @@ p_z_score <- read.csv("I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_
 rownames(p_z_score) <- p_z_score$X  
 p_z_score$X <- NULL
 
-# Indien gewenst: bekijk even de eerste paar rijen
+# show head 
 head(t_z_score)
 head(p_z_score)
 
-# Zorg dat je dezelfde genen/proteïnen overhoudt
 
-# Haal de gewenste genen op uit df2 (stel dat de kolom "gene" heet)
+# filter genes and proteins of our selected gene list 
 selected_genes <- same_degs$same_genes
 t_z_score_sub <- t_z_score[rownames(t_z_score) %in% selected_genes, ]
 p_z_score_sub <- p_z_score[rownames(p_z_score) %in% selected_genes, ]
@@ -28,23 +27,8 @@ t_z_score_sub <- rownames_to_column(t_z_score_sub, var = "gene")
 p_z_score_sub <- rownames_to_column(p_z_score_sub, var = "gene")
 
 
-# -------------------------------
-# 2. Data omzetten naar long format
-# -------------------------------
-# Hier veronderstellen we dat elke kolom een conditie is.
-# We maken een lange tabel waarin we aangeven of het transcriptomics of proteomics betreft.
 
-library(ggplot2)
-library(dplyr)
-library(tidyr)
-
-# Voorbeeld: Stel dat in t_z_score_sub de conditienamen zo zijn:
-# "unstimulated", "aCD3_aCD27_vs_aCD3", "aCD3_aCD28_vs_aCD3", etc.
-# En in p_z_score_sub bijvoorbeeld:
-# "UNSTIM", "CD3_CD27", "CD3_CD28", etc.
-# Dan pas je ze eerst aan zodat ze overeenkomen.
-
-# Transcriptomics data omzetten naar long format en conditienamen recoden:
+# Transcriptomics data long format and make names the same as proteomic 
 trans_long <- t_z_score_sub %>%
   mutate(gene = rownames(t_z_score_sub)) %>%
   pivot_longer(
@@ -54,7 +38,6 @@ trans_long <- t_z_score_sub %>%
   ) %>%
   mutate(
     DataType = "Transcriptomics",
-    # Pas hier de transcriptomics conditienamen aan zodat ze overeenkomen met de proteomics
     Condition = recode(Condition,
                        "unstimulated"         = "Unstim",
                        "aCD3_aCD27_vs_aCD3"   = "aCD3_aCD27",
@@ -65,7 +48,7 @@ trans_long <- t_z_score_sub %>%
     )
   )
 
-# Proteomics data omzetten naar long format en conditienamen recoden:
+# Proteomics data long format and same names and transcriptomics 
 prot_long <- p_z_score_sub %>%
   mutate(gene = rownames(p_z_score_sub)) %>%
   pivot_longer(
@@ -75,7 +58,6 @@ prot_long <- p_z_score_sub %>%
   ) %>%
   mutate(
     DataType = "Proteomics",
-    # Pas hier de proteomics conditienamen aan zodat ze overeenkomen met de transcriptomics
     Condition = recode(Condition,
                        "UNSTIM"     = "Unstim",
                        "aCD3_aCD27" = "aCD3_aCD27",
@@ -86,7 +68,7 @@ prot_long <- p_z_score_sub %>%
     )
   )
 
-# Nu beide datasets combineren op basis van 'gene' en 'Condition'
+# combine dataset
 combined_scatter <- inner_join(
   trans_long,
   prot_long,
@@ -94,7 +76,7 @@ combined_scatter <- inner_join(
   suffix = c("_trans", "_prot")
 )
 
-# Maak de scatter plot: x = proteomics z_score, y = transcriptomics z_score
+# make density plot 
 scatter_plot <- ggplot(combined_scatter, aes(x = z_score_prot, y = z_score_trans)) +
   geom_point(alpha = 0.7) +
   geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +

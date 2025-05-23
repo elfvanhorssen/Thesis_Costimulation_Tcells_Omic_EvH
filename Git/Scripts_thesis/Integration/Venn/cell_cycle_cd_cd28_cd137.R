@@ -8,21 +8,21 @@ proteins_cd3_cd28_cd137 <- read.csv("I:/Research/TCR/2.Lab Members/Eralin van Ho
 genes_cd3_cd28_cd137 <- read.csv("I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/1.unbiased_rnaseq/results/2.DEG/4.top_genes/aCD3_vs_aCD3_aCD28_a4_1BB_DEGs.csv")
 
 
-# 📌 Je eigen DEGs en DEPs (schoongemaakt)
+# make DEG and DEP sets 
 deg_set <- unique(toupper(trimws(genes_cd3_cd28_cd137$geneName)))
 dep_set <- unique(toupper(trimws(proteins_cd3_cd28_cd137$gene_id)))
 
-# 📡 Connectie met Ensembl
+# Use Ensembl for gene convertion
 ensembl <- useEnsembl(biomart = "genes", dataset = "hsapiens_gene_ensembl")
 
-# 🧬 GO-terms voor cell cycle (algemeen + specifiek)
+# List some GO terms 
 go_terms_cellcycle <- c("GO:0007049", # Cell cycle
                         "GO:0051301", # Cell division
                         "GO:0000278", # Mitotic cell cycle
                         "GO:0000086", # G2/M transition
                         "GO:0000075") # Cell cycle checkpoint
 
-# 🔍 Ophalen van protein-coding genen met deze GO-termen
+# Get protein code
 cell_cycle_bm <- getBM(
   attributes = c("external_gene_name", "gene_biotype", "go_id"),
   filters = c("go", "biotype"),
@@ -30,14 +30,14 @@ cell_cycle_bm <- getBM(
   mart = ensembl
 )
 
-# 🧼 Unieke genen opschonen
+# Get only unique genes 
 cell_cycle_genes <- unique(toupper(trimws(cell_cycle_bm$external_gene_name)))
 
-# 🔎 Filter jouw sets
+# Filter on the cell cycle gene set 
 deg_cellcycle <- deg_set[deg_set %in% cell_cycle_genes]
 dep_cellcycle <- dep_set[dep_set %in% cell_cycle_genes]
 
-# 📊 Venn plot
+# Make Venn
 venn.plot <- draw.pairwise.venn(
   area1 = length(deg_cellcycle),
   area2 = length(dep_cellcycle),
@@ -52,25 +52,25 @@ venn.plot <- draw.pairwise.venn(
   scaled = TRUE
 )
 
-# Outputpad (pas eventueel aan)
+
 output_dir <- "I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/figures/Venn/"
 output_base <- paste0(output_dir, "cell_cycle_cd3_cd28_cd137")
 
-#  Opslaan als SVG
+#  save
 svg(paste0(output_base, ".svg"), width = 6, height = 6)
 grid.draw(venn.plot)
 dev.off()
 
-# Opslaan als EPS (vector)
+
 cairo_ps(paste0(output_base, ".eps"), width = 6, height = 6, fallback_resolution = 300)
 grid.draw(venn.plot)
 dev.off()
 
-# Opslaan als PNG (raster)
+
 png(paste0(output_base, ".png"), width = 1200, height = 1000, res = 300)
 grid.draw(venn.plot)
 dev.off()
 
-# exporteer overlappende coding genen als CSV
+# export overlapping genes 
 overlap_genes <- intersect(deg_coding, dep_coding)
 write.csv(overlap_genes, paste0(output_base, "_overlap_cell_cycle_cd3_cd28_cd137.csv"), row.names = FALSE)

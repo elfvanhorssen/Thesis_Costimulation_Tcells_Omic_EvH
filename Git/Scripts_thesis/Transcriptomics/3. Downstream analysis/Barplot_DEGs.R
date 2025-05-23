@@ -1,4 +1,4 @@
-### 1️⃣ Vereiste packages laden
+#packages 
 library(DESeq2)
 library(ggplot2)
 library(pheatmap)
@@ -9,19 +9,18 @@ library(tidyr)
 deseq_res <- readRDS("I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/results_listcsp_inverse.rds")
 
 
-
-### 3️⃣ Up/Downregulated genen tellen per comparison
+# count the up and down regulated genes 
 deg_counts <- data.frame(Comparison = character(), Up = integer(), Down = integer(), stringsAsFactors = FALSE)
 
-# Loop door elke vergelijking in de lijst
+# Loop trough every comparison
 for (comparison in names(deseq_res)) {
   res <- deseq_res[[comparison]]
   
-  # Genen categoriseren als Up, Down of Unchanged
+  # catagorise genes as up, down or no change 
   up_count <- sum(res$padj < 0.01 & res$log2FoldChange > 1, na.rm = TRUE)
   down_count <- sum(res$padj < 0.01 & res$log2FoldChange < -1, na.rm = TRUE)
   
-  # Opslaan in dataframe
+  # save as dataframe
   deg_counts <- rbind(deg_counts, data.frame(Comparison = comparison, Up = up_count, Down = down_count))
 }
 
@@ -30,9 +29,8 @@ for (comparison in names(deseq_res)) {
 library(tidyr)
 library(ggplot2)
 
-# Stel, je dataframe 'deg_counts' bevat de kolommen: Comparison, Up en Down
 
-# Zet de data om van wide naar long formaat:
+# change dtaa to long-format 
 deg_long <- pivot_longer(deg_counts,
                          cols = c("Up", "Down"),
                          names_to = "Regulation",
@@ -41,11 +39,8 @@ deg_long <- pivot_longer(deg_counts,
 
 selected_comparisons <- c("aCD3_aCD27_vs_aCD3", "aCD3_aCD28_vs_aCD3", "aCD3_a4_1BB_vs_aCD3", "aCD3_aCD27_aCD28_vs_aCD3", "aCD3_aCD28_a4_1BB_vs_aCD3")
 
-library(dplyr)
-library(tidyr)
-library(ggplot2)
 
-# Filter alleen de gewenste comparisons
+# Filter the comparisons, on our study 
 selected_comparisons <- c("aCD3_aCD27_vs_aCD3", 
                           "aCD3_aCD28_vs_aCD3", 
                           "aCD3_a4_1BB_vs_aCD3", 
@@ -55,7 +50,7 @@ selected_comparisons <- c("aCD3_aCD27_vs_aCD3",
 df_filtered <- deg_long %>% 
   filter(Comparison %in% selected_comparisons)
 
-# Stel de gewenste volgorde in voor de Comparison variabele
+# order the comparisons 
 desired_order <- c("aCD3_aCD27_vs_aCD3", 
                    "aCD3_a4_1BB_vs_aCD3", 
                    "aCD3_aCD28_vs_aCD3",
@@ -64,10 +59,10 @@ desired_order <- c("aCD3_aCD27_vs_aCD3",
 
 df_filtered$Comparison <- factor(df_filtered$Comparison, levels = desired_order)
 
-# Indien gewenst, stel ook de volgorde van de Regulation in (bijvoorbeeld eerst Up, dan Down)
+#order of up and down 
 df_filtered$Regulation <- factor(df_filtered$Regulation, levels = c("Up", "Down"))
 
-# Maak de stacked bar chart met de gefilterde data
+# make the barplot
 plot1 <- ggplot(df_filtered, aes(x = Count, y = Comparison, fill = Regulation)) +
   geom_bar(stat = "identity", position = "stack") +
   scale_fill_manual(values = c("Up" = "salmon", "Down" = "lightblue")) +
@@ -78,19 +73,15 @@ plot1 <- ggplot(df_filtered, aes(x = Count, y = Comparison, fill = Regulation)) 
 
 print(plot1)
 
-
-library(dplyr)
-library(ggplot2)
-
-# 1. Maak 'Down' negatief
+# make downregulation negative 
 df_diverging <- df_filtered %>%
   mutate(Count = ifelse(Regulation == "Down", -Count, Count))
 
-# 2. Plotten als 'diverging bar chart'
+# plot diverging bar plot 
 p <- ggplot(df_diverging, aes(x = Count, y = Comparison, fill = Regulation)) +
   #geom_col() +
   geom_col(width = 0.5) + 
-  # Verticale lijn op x=0 zodat duidelijk is waar de scheiding tussen Up/Down zit
+  # make line bewteen zero to make a clear seperation between up and down 
   geom_vline(xintercept = 0, color = "black") +
   scale_fill_manual(values = c("Up" = "salmon", "Down" = "lightblue")) +
   labs(title = "DE genes padj < 0.01 & res$log2FoldChange > 1 compared to aCD3",
@@ -103,14 +94,8 @@ p
 output_dir <- "I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/figures/deg/"
 output_base <- paste0(output_dir, "DE_transcriptomics")
 
-# Sla op als PNG (hoge resolutie)
+# Save
 ggsave(paste0(output_base, ".png"), plot = p, width = 8, height = 6, dpi = 300)
-
-
-# Sla op als SVG
 ggsave(paste0(output_base, ".svg"), plot = p, width = 8, height = 6)
-
-
-# Sla op als EPS (voor vectorformaat)
 ggsave(paste0(output_base, ".eps"), plot = p, width = 8, height = 6, device = cairo_ps)
 

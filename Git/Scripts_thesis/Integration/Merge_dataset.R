@@ -1,8 +1,7 @@
-#heatmap genes felix 
 #library 
 library(dplyr)
 
-#load z_scores and metadata proteomic and transcriptomics 
+#load z_scores data
 t_z_score <- read.csv("I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/figures/figures/data/z_scores_trans.csv")
 rownames(t_z_score) <- t_z_score$X  
 t_z_score$X <- NULL
@@ -12,7 +11,7 @@ rownames(p_z_score) <- p_z_score$X
 p_z_score$X <- NULL
 
 
-#look distribution 
+#look at distribution 
 t_z_score_matrix <- as.matrix(t_z_score)
 p <- hist(t_z_score_matrix, breaks=50, main = "rna distribution z-score", col = "blue")
 p

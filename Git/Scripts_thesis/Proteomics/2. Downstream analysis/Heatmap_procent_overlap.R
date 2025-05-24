@@ -21,7 +21,7 @@ for(i in 1:n) {
       res_i <- result_list_log[[comparisons[i]]]
       res_j <- result_list_log[[comparisons[j]]]
       
-      # get gebe/proteinID
+      # get gene/proteinID
       genes_up_i <- rownames(res_i)[ !is.na(res_i$adj.P.Val) & res_i$P.Value < pval_threshold & res_i$logFC > logfc_threshold ]
       genes_up_j <- rownames(res_j)[ !is.na(res_j$adj.P.Val) & res_j$P.Value < pval_threshold & res_j$logFC > logfc_threshold ]
       

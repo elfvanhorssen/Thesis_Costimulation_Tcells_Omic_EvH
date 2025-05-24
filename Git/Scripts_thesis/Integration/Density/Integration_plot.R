@@ -7,12 +7,7 @@ library(ggplot2)
 t_z_score <- read.csv("I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/figures/R/data/z_scores_trans.csv")
 p_z_score <- read.csv("I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/figures/R/data/z_scores_proteomics.csv")
 
-
-# Stel je hebt een dataframe 'same_genes' met een kolom 'Gene' waarin de genen staan.
-#genes_of_interest <- same_degs$same_genes
-
-
-# Schoonmaken en uniek maken (toupper + trimws)
+# Clean the unique names 
 
 
 deg_coding_venn <- deg_set[deg_set %in% coding_genes]
@@ -20,23 +15,25 @@ dep_coding_venn <- dep_set[dep_set %in% coding_genes]
 
 deg_coding_venn_use <- unique(toupper(trimws(deg_coding_venn)))
 dep_coding_venn_use<- unique(toupper(trimws(dep_coding_venn)))
-#look at which are the same
+
+#look at the overlapping degs and deps 
 
 genes_of_interest <- intersect(deg_coding_venn_use, dep_coding_venn_use)
 length(genes_of_interest)
 
 
-# 1. Transcriptomics naar long + filter op genen
+# transxriptomic to long format and clean names 
 t_long <- t_z_score %>%
   filter(X %in% genes_of_interest) %>%
   pivot_longer(
-    cols = -X,  # Alle kolommen behalve de gennaam
+    cols = -X,
     names_to = "Condition_t",
     values_to = "Transcriptomics_z"
   ) 
 
 
 library(dplyr)
+#change the condition names 
 
 t_long <- t_long %>%
   mutate(condition_cleaned = recode(Condition_t,
@@ -77,17 +74,17 @@ t_long <- t_long %>%
                                     "aCD3_aCD27_a4_1BB.2"   = "aCD3_aCD27_a4_1BB",
                                     "aCD3_aCD27_a4_1BB.3"   = "aCD3_aCD27_a4_1BB",
                                     "aCD3_aCD27_a4_1BB.4"   = "aCD3_aCD27_a4_1BB"
-                                    # Voeg hier meer mapping toe zoals jij dat nodig hebt
+                                    
   ))
 
 
-#delete condtin t 
+#delete condtion t 
 
 t_long <- t_long %>%
   select(-Condition_t)
 
 
-# 3. Proteomics naar long + filter op genen
+# proteomics long format and filter on genes
 p_long <- p_z_score %>%
   filter(X %in% genes_of_interest) %>%
   pivot_longer(
@@ -119,7 +116,7 @@ p_long <- p_long %>%
                                     "X7.1.aCD3.aCD28.a4_1BB"   = "aCD3_aCD28_a4_1BB",
                                     "X7.2.aCD3.aCD28.a4_1BB"   = "aCD3_aCD28_a4_1BB",
                                     "X7.3.aCD3.aCD28.a4_1BB"   = "aCD3_aCD28_a4_1BB"
-                                    # Voeg hier meer mapping toe zoals jij dat nodig hebt
+                                    
   ))
 
 
@@ -153,7 +150,7 @@ df_filtered$condition_cleaned <- factor(df_filtered$condition_cleaned, levels = 
 
 
 
-# Maak plots per conditie
+# make plots per condition 
 conditions <- unique(df_filtered$condition_cleaned)
 
 x_limits <- range(df_filtered$mean_value_t, na.rm = TRUE)
@@ -177,15 +174,11 @@ for (cond in conditions) {
   output_dir <- "I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/figures/density/"
   output_base <- paste0(output_dir, "new_DE_integration_", cond)
   
-  # Sla op als PNG (hoge resolutie)
+  # Save
   ggsave(paste0(output_base, ".png"), plot = p, width = 8, height = 6, dpi = 300)
-  
-  
-  # Sla op als SVG
+
   ggsave(paste0(output_base, ".svg"), plot = p, width = 8, height = 6)
-  
-  
-  # Sla op als EPS (voor vectorformaat)
+
   ggsave(paste0(output_base, ".eps"), plot = p, width = 8, height = 6, device = cairo_ps)
   
   
@@ -196,101 +189,3 @@ for (cond in conditions) {
 
 
 
-
-
-
-
-### old code ### 
-
-output_dir <- "I:/Research/TCR/2.Lab Members/Eralin van Horssen/co_stim_project/figures/density/"
-output_base <- paste0(output_dir, "DE_integration")
-
-# Sla op als PNG (hoge resolutie)
-ggsave(paste0(output_base, ".png"), plot = p, width = 8, height = 6, dpi = 300)
-
-
-# Sla op als SVG
-ggsave(paste0(output_base, ".svg"), plot = p, width = 8, height = 6)
-
-
-# Sla op als EPS (voor vectorformaat)
-ggsave(paste0(output_base, ".eps"), plot = p, width = 8, height = 6, device = cairo_ps)
-
-
-
-df_avg_cond <- df_filtered %>%
-  group_by(X, condition_cleaned) %>%
-  summarise(
-    mean_Transcriptomics_z = mean(Transcriptomics_z, na.rm = TRUE),
-    mean_Proteomics_z      = mean(Proteomics_z, na.rm = TRUE),
-    .groups = "drop"
-  )
-
-
-ggplot(df_avg_cond, aes(x = mean_Transcriptomics_z, y = mean_Proteomics_z)) +
-  geom_point() +
-  facet_wrap(~ condition_cleaned) +
-  theme_minimal()
-
-
-
-# 4. Join transcriptomics en proteomics op gen + uniforme conditienaam
-df_merged <- t_long %>% 
-  full_join(p_long, by = c("X", "condition_cleaned"))
-
-df_filtered <- df_merged %>%
-  filter(condition_cleaned %in% c("aCD3", "aCD3_aCD27", "aCD3_a4_1BB", "aCD3_aCD27_aCD28", "aCD3_aCD28_a4_1BB"))
-
-
-
-# 5. Maak een 2D-density-plot per conditie (facet)
-ggplot(df_filtered, aes(x = Transcriptomics_z, y = Proteomics_z)) +
-  stat_density_2d(aes(fill = after_stat(level)), geom = "polygon", alpha = 0.4) +
-  geom_point(size = 1, alpha = 0.5) +
-  facet_wrap(~ condition_cleaned) +
-  theme_minimal() +
-  labs(
-    title = "2D density plot: Transcriptomics vs Proteomics",
-    x = "Transcriptomics z-score",
-    y = "Proteomics z-score"
-  )
-
-
-
-# df_avg <- df_filtered %>%
-#   group_by(X) %>%  # groepeer op gen
-#   summarise(
-#     mean_Transcriptomics_z = mean(Transcriptomics_z, na.rm = TRUE),
-#     mean_Proteomics_z      = mean(Proteomics_z, na.rm = TRUE),
-#     .groups = "drop"
-#   )
-# 
-# 
-# 
-# library(ggplot2)
-# 
-# ggplot(df_avg, aes(x = mean_Transcriptomics_z, y = mean_Proteomics_z)) +
-#   geom_point() +
-#   theme_minimal() +
-#   facet_wrap(~ condition_cleaned) +
-#   labs(
-#     x = "Mean Transcriptomics z-score",
-#     y = "Mean Proteomics z-score"
-#   )
-
-
-
-
-df_avg_cond <- df_filtered %>%
-  group_by(X, condition_cleaned) %>%
-  summarise(
-    mean_Transcriptomics_z = mean(Transcriptomics_z, na.rm = TRUE),
-    mean_Proteomics_z      = mean(Proteomics_z, na.rm = TRUE),
-    .groups = "drop"
-  )
-
-
-ggplot(df_avg_cond, aes(x = mean_Transcriptomics_z, y = mean_Proteomics_z)) +
-  geom_point() +
-  facet_wrap(~ condition_cleaned) +
-  theme_minimal()

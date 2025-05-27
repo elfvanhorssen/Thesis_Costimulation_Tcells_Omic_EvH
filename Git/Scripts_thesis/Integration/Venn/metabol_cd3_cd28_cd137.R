@@ -55,6 +55,7 @@ metabolism_bm <- getBM(
   filters = c("go", "biotype"),
   values = list(go_terms_metabolism, "protein_coding"),
   mart = ensembl
+  
 )
 
 # clean unique genes 
@@ -99,5 +100,5 @@ grid.draw(venn.plot)
 dev.off()
 
 #export overlapping genes. 
-overlap_genes <- intersect(deg_coding, dep_coding)
+overlap_genes <- intersect(deg_metabolism, dep_metabolism)
 write.csv(overlap_genes, paste0(output_base, "_overlap_metabol_cd3_cd28_cd137.csv"), row.names = FALSE)

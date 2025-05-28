@@ -1,0 +1,56 @@
+© 2000-2025 QIAGEN. All rights reserved. USE OF THIS CONTENT IS SUBJECT TO THE TERMS OF YOUR IPA END USER LICENSE AGREEMENT
+From Molecule(s)	Relationship Type	To Molecule(s)	Catalyst(s)	
+14-3-3 dimer; p-S216-CDC25C	reaction	p-S216-CDC25C:14-3-3proteincomplex		
+ATP; CCNB1:p-T14,T161-CDK1	reaction	ADP; CCNB1:p-T14,Y15,T161-CDK1	WEE1	
+ATP; CCNB:CDK1	reaction	ADP; CCNB:p-T14-CDK1	PKMYT1	
+ATP; CDC25A	reaction	ADP; p-S124-CDC25A	p-S,3T-CHEK2	
+ATP; CDC25A	reaction	ADP; p-S124-CDC25A	p-S317,S345-CHEK1	
+ATP; CDC25C	reaction	ADP; p-S216-CDC25C	p-S,3T-CHEK2	
+ATP; CDC25C	reaction	ADP; p-S216-CDC25C	p-S317,S345-CHEK1	
+ATP; CHEK1	reaction	ADP; p-S317,S345-CHEK1	ATR:ATRIP	
+ATP; Cdc45:CDK:DDK:Mcm10:claspin:pre-replicative complex	reaction	ADP; Cdc45:CDK:DDK:Mcm10:Activatedclaspin:pre-replicative complex	ATR:ATRIP	
+ATP; DNA DNA DSBs:p-MRN:p-S1981,Ac-K3016-ATM:KAT5:K63PolyUb-K14,K16,p-S139-H2AFX,Me2K21-HIST1H4A-Nucleosome:p-5T-MDC1:p-S102-WHSC1:RNF8:Zn2+:SUMO1:p-T4827-HERC2:UBE2N:UBE2V2:RNF168:PIAS4:p-S25,S1778-TP53BP1:p-4S,2T-BRCA1-A complex:CHEK2	reaction	ADP; DNA DNA DSBs:p-MRN:p-S1981,Ac-K3016-ATM:KAT5:K63PolyUb-K14,K16,p-S139-H2AFX,Me2K21-HIST1H4A-Nucleosome:p-5T-MDC1:p-S102-WHSC1:RNF8:Zn2+:SUMO1:p-T4827-HERC2:UBE2N:UBE2V2:RNF168:PIAS4:p-S25,S1778-TP53BP1:p-4S,2T-BRCA1-A complex; p-T68-CHEK2	DNA DNA DSBs:p-MRN:p-S1981,Ac-K3016-ATM:KAT5:K63PolyUb-K14,K16,p-S139-H2AFX,Me2K21-HIST1H4A-Nucleosome:p-5T-MDC1:p-S102-WHSC1:RNF8:Zn2+:SUMO1:p-T4827-HERC2:UBE2N:UBE2V2:RNF168:PIAS4:p-S25,S1778-TP53BP1:p-4S,2T-BRCA1-A complex:CHEK2	
+ATP; RFWD2	reaction	ADP; p-S387-RFWD2	p-S1981,Ac-K3016-ATM	
+ATP; TP53Tetramer	reaction	ADP; p-S15-TP53Tetramer	ATR:ATRIP:RPA:3' overhangingssDNA-DSBs:p-MRN:p-S1981,Ac-K3016-ATM:KAT5:BRCA1-C complex:EXO1,DNA2:BLM,WRN:p-S990,Ac-K1249-BRIP1:RAD17:RFC:RAD9:HUS1:RAD1:RHNO1:TOPBP1	
+ATP; TP53Tetramer	reaction	ADP; p-S15-TP53Tetramer	p-S1981,Ac-K3016-ATM	
+ATP; WEE1	reaction	ADP; p-WEE1	p-S317,S345-CHEK1	
+ATP; p-S15-TP53Tetramer	reaction	ADP; p-S15,S20-TP53Tetramer	p-S,3T-CHEK2	
+ATP; p-S15-TP53Tetramer	reaction	ADP; p-S15,S20-TP53Tetramer	p-S317,S345-CHEK1	
+ATP; p-S166,S188-MDM2	reaction	ADP; p-5S,T-MDM2	p-S1981,Ac-K3016-ATM	
+ATP; p-S166,S188-MDM2:MDM4	reaction	ADP; p-S166,S188-MDM2:p-S403-MDM4	p-S1981,Ac-K3016-ATM	
+ATP; p-S166,S188-MDM2:p-S403-MDM4	reaction	ADP; p-S166,S188-MDM2:p-S346,S367,S403-MDM4	p-S,3T-CHEK2	
+ATP; p-T68-CHEK2dimer	reaction	ADP; p-S,3T-CHEK2	p-T68-CHEK2dimer	
+ATR:ATRIP; RPA complexedto ssDNA	reaction	ATR:ATRIP:RPA:ssDNAsignalingcomplex		
+ActivatedMAD2L1; BUB1B; BUB3; CDC20	reaction	hBUBR1:hBUB3:MAD2*:CDC20 complex		
+ActivatedMAD2L1; CDC20	reaction	MAD2*CDC20complex		
+CCNA:CDK2; CDKN1A,CDKN1B	reaction	CyclinA:Cdk2:p21/p27complex	CDKN1A,CDKN1B	
+CCNE:CDK2; CDKN1A,CDKN1B	reaction	CyclinE:CDK2:CDKN1A,CDKN1B	CDKN1A,CDKN1B	
+CDK:DDK:MCM10:active pre-replicativecomplex:CDC45; CLSPN	reaction	Cdc45:CDK:DDK:Mcm10:claspin:pre-replicative complex		
+CDKN1A gene	reaction	CDKN1A mRNA	p-S15,S20-TP53 Tetramer:ZNF385A:CDKN1A Gene	
+CDKN1A gene; p-S15,S20-TP53 Tetramer:ZNF385A	reaction	p-S15,S20-TP53 Tetramer:ZNF385A:CDKN1A Gene		
+CDKN1A mRNA	reaction	CDKN1A	PCBP4:CDKN1A mRNA	
+CDKN1A mRNA; PCBP4	reaction	PCBP4:CDKN1A mRNA		
+CHEK2; DNA DNA DSBs:p-MRN:p-S1981,Ac-K3016-ATM:KAT5:K63PolyUb-K14,K16,p-S139-H2AFX,Me2K21-HIST1H4A-Nucleosome:p-5T-MDC1:p-S102-WHSC1:RNF8:Zn2+:SUMO1:p-T4827-HERC2:UBE2N:UBE2V2:RNF168:PIAS4:p-S25,S1778-TP53BP1:p-4S,2T-BRCA1-A complex	reaction	DNA DNA DSBs:p-MRN:p-S1981,Ac-K3016-ATM:KAT5:K63PolyUb-K14,K16,p-S139-H2AFX,Me2K21-HIST1H4A-Nucleosome:p-5T-MDC1:p-S102-WHSC1:RNF8:Zn2+:SUMO1:p-T4827-HERC2:UBE2N:UBE2V2:RNF168:PIAS4:p-S25,S1778-TP53BP1:p-4S,2T-BRCA1-A complex:CHEK2		
+Kinetochore:Mad1:MAD2*Complex	reaction	ActivatedMAD2L1; Mad1:kinetochorecomplex		
+Kinetochore; MAD1L1	reaction	Mad1:kinetochorecomplex		
+Mad1:kinetochorecomplex; MAD2L1	reaction	Kinetochore:Mad1:MAD2Complex		
+PolyUb-TP53Tetramer	translocation	PolyUb-TP53Tetramer		
+RAD17:RFC; RPA complexedto ssDNA	reaction	Rad17-RFC complexboundto DNA		
+RPA heterotrimer	reaction	RPA complexedto ssDNA	Persistentsingle-stranded DNA	
+Rad17-RFC complexboundto DNA; RAD9:HUS1:RAD1	reaction	Rad9-Hus1-Rad1boundto DNA	Rad17-RFC complexboundto DNA	
+Ub-p-S124-CDC25A	reaction	Ub	26S proteasome	
+hBUBR1:hBUB3:MAD2*:CDC20 complex; phosphorylatedanaphasepromotingcomplex (APC/C)	reaction	MCC:APC/Ccomplex		
+p-S124-CDC25A; Ub	reaction	Ub-p-S124-CDC25A	Ubiquitinligase	
+p-S15,S20-TP53Tetramer; ZNF385A	reaction	p-S15,S20-TP53 Tetramer:ZNF385A		
+p-S166,S188-MDM2 dimer,p-S166,S188-MDM2,MDM4:TP53; Ub	reaction	p-S166,S188-MDM2 dimer,p-S166,S188-MDM2:MDM4; PolyUb-TP53Tetramer	p-S166,S188-MDM2 dimer,p-S166,S188-MDM2,MDM4:TP53; p14ARF:p-S166,S188-MDM2 dimer,p-S166,S188-MDM2:MDM4	
+p-S166,S188-MDM2 dimer,p-S166,S188-MDM2:MDM4; TP53Tetramer	reaction	p-S166,S188-MDM2 dimer,p-S166,S188-MDM2,MDM4:TP53	PHF20	
+p-S166,S188-MDM2,MDM4; p-S166,S188-MDM2	reaction	p-S166,S188-MDM2 dimer,p-S166,S188-MDM2:MDM4	p-S1981,Ac-K3016-ATM	
+p-S166,S188-MDM2:p-S346,S367,S403-MDM4; Ub	reaction	PolyUb,p-S166,S188-MDM2:PolyUb,p-S342,S367,S403-MDM4	p-S166,S188-MDM2:p-S346,S367,S403-MDM4	
+p-S216-CDC25C	translocation	p-S216-CDC25C		
+p-S387-RFWD2	translocation	p-S387-RFWD2		
+p-S387-RFWD2:p-S15-TP53	reaction	p-S15-TP53Tetramer; p-S387-RFWD2		
+p-S387-RFWD2; Ub	reaction	ubiquitinatedphospho-COP1(ser-387)	p-S387-RFWD2	
+p-S435-GTSE1:PolyUb-TP53 Tetramer	reaction	p-S435-GTSE1; Ub	26S proteasome	
+p-S435-GTSE1:PolyUb-TP53 Tetramer	translocation	p-S435-GTSE1:PolyUb-TP53 Tetramer		
+p-S435-GTSE1; PolyUb-TP53Tetramer	reaction	p-S435-GTSE1:PolyUb-TP53 Tetramer		
+ubiquitinatedphospho-COP1(ser-387)	reaction	Ub	26S proteasome	

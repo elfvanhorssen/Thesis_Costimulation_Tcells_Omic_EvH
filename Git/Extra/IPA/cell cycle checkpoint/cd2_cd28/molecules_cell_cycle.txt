@@ -1,0 +1,65 @@
+© 2000-2025 QIAGEN. All rights reserved.
+Symbol	Synonym(s)	Entrez Gene Name	Ensembl	Expr Log Ratio	Expr p-value	Expr False Discovery Rate (q-value)	Location	Family	Drugs	Entrez Gene ID for Human	Entrez Gene ID for Mouse	Entrez Gene ID for Rat	PubChem ID	HMDB ID	CAS ID	
+14-3-3 dimer	CBP						Cytoplasm	group					
+26S proteasome							Cytoplasm	complex					
+ADP	20398-34-9, [(2R,3S,4R,5R)-5-(6-aminopurin-9-yl)-3,4-dihydroxyoxolan-2-yl]methyl phosphono hydrogen phosphate, 58-64-0, 9-beta-D-arabinofuranosyladenine 5'-diphosphate, 9-β-D-arabinofuranosyladenine 5'-diphosphate, adenosine 5'-(trihydrogen diphosphate), adenosine diphosphate, C10H15N5O10P2						Other	chemical - endogenous mammalian					6022	HMDB0001341	20398-34-9	
+ATP	[[(2R,3S,4R,5R)-5-(6-aminopurin-9-yl)-3,4-dihydroxyoxolan-2-yl]methoxy-hydroxyphosphoryl] phosphono hydrogen phosphate, 56-65-5, 9-beta-D-arabinofuranosyladenine 5'-triphosphate, 9-β-D-arabinofuranosyladenine 5'-triphosphate, adenosine 5'-(tetrahydrogen triphosphate), adenosine 5'-triphosphate, ATP, ATP4-, C10H16N5O13P3						Other	chemical - endogenous mammalian					5957	HMDB0000538	56-65-5	
+ATR:ATRIP							Nucleus	complex					
+ATR:ATRIP:RPA:ssDNAsignalingcomplex							Nucleus	complex					
+ATR:ATRIP:RPA:3' overhangingssDNA-DSBs:p-MRN:p-S1981,Ac-K3016-ATM:KAT5:BRCA1-C complex:EXO1,DNA2:BLM,WRN:p-S990,Ac-K1249-BRIP1:RAD17:RFC:RAD9:HUS1:RAD1:RHNO1:TOPBP1							Cytoplasm	complex					
+BUB1B	Bub1A, BUB1beta, BUB1B, mitotic checkpoint serine/threonine kinase, BUB1 mitotic checkpoint serine/threonine kinase B, BUBR1, hBUBR1, MAD3, MAD3L, MVA1, SSK1	BUB1 mitotic checkpoint serine/threonine kinase B	ENSG00000156970	-6.75959820561016	7.51168404396518E-49	1.63576657425547E-46	Nucleus	kinase		701	12236	171576	
+BUB3	Aa2-050, BUB3L, BUB3 mitotic checkpoint protein, hBUB3	BUB3 mitotic checkpoint protein	ENSG00000154473	-0.788751761056215	5.13962978267954E-15	4.30347013247545E-14	Nucleus	other		9184	12237	361662	
+CCNA:CDK2							Nucleus	complex					
+CCNB1:p-T14,T161-CDK1							Nucleus	complex					
+CCNB:CDK1							Cytoplasm	complex					
+CCNE:CDK2							Nucleus	complex					
+CDC20	2310042N09Rik, bA276H19.3, CDC20A, cell division cycle 20, OOMD14, OZEMA14, p55CDC	cell division cycle 20	ENSG00000117399	-8.94511439810542	7.73698291639543E-62	1.86666831346138E-58	Nucleus	other		991	107995	64515	
+CDC25C	CDC25, cdc25c-64, cell division cycle 25C, PPP1R60	cell division cycle 25C	ENSG00000158402	-5.59684146409839	1.40089173509061E-22	2.12285645506154E-21	Nucleus	phosphatase		995	12532	307511	
+Cdc45:CDK:DDK:Mcm10:claspin:pre-replicative complex							Nucleus	complex					
+CDK:DDK:MCM10:active pre-replicativecomplex:CDC45							Nucleus	complex					
+CDKN1A	CAP20, CDKI, CDKN1, CDKNA1, CIP1, cyclin-dependent kinase inhibitor 1A, MDA-6, P21, p21Cip, p21CIP1, p21WAF, p21WAF1, Pzl Cyclin-Dependent Kinase Inhibitor, SDI1, UV96, WAF1	cyclin dependent kinase inhibitor 1A	ENSG00000124762	-3.40923362091106	2.5886604069495E-7	1.08592235507279E-6	Nucleus	kinase		1026	12575	114851	
+CDKN1A,CDKN1B							Cytoplasm	group					
+CHEK1	checkpoint kinase 1, CHK1, OZEMA21, rad27	checkpoint kinase 1	ENSG00000149554	-6.15183774940018	2.37950183013949E-45	3.26881284123554E-43	Nucleus	kinase	PEP07, BBI-355, PF 00477736, XL844, cdc25C phosphatase (211-221), rabusertib, MK-8776, prexasertib, GDC-0575, GDC-0425, CCT245737, LY2880070, CHK1 inhibitor, UCN-01, SB 218078	1111	12649	140583	
+CHEK2	CDS1, Check2, checkpoint kinase 2, CHK2, hCds1, HUCDS1, LFS2, PP1425, RAD53, TPDS4	checkpoint kinase 2	ENSG00000183765	-0.676089459495947	0.00162816267653691	0.00412947341599795	Nucleus	kinase	PHI-101, XL844, CCT-241533, rabusertib	11200	50883	114212	
+CLSPN	B130025E01, C85083, claspin, E130314M08RIK, LOC100912611	claspin	ENSG00000092853	-8.0622037257895	4.07004613238168E-65	1.70930308856795E-61	Nucleus	other		63967	269582	298534	
+CyclinA:Cdk2:p21/p27complex							Nucleus	complex					
+CyclinE:CDK2:CDKN1A,CDKN1B							Nucleus	complex					
+DNA DNA DSBs:p-MRN:p-S1981,Ac-K3016-ATM:KAT5:K63PolyUb-K14,K16,p-S139-H2AFX,Me2K21-HIST1H4A-Nucleosome:p-5T-MDC1:p-S102-WHSC1:RNF8:Zn2+:SUMO1:p-T4827-HERC2:UBE2N:UBE2V2:RNF168:PIAS4:p-S25,S1778-TP53BP1:p-4S,2T-BRCA1-A complex	DNA DNA DSBs:MRN:S1981,Ac-K3016-ATM:KAT5:K14,K16,H2AFX,Me2K21-HIST1H4A-Nucleosome:MDC1:WHSC1:RNF8:Zn2+:SUMO1:HERC2:UBE2N:UBE2V2:RNF168:PIAS4:TP53BP1:BRCA1-A						Cytoplasm	complex					
+DNA DNA DSBs:p-MRN:p-S1981,Ac-K3016-ATM:KAT5:K63PolyUb-K14,K16,p-S139-H2AFX,Me2K21-HIST1H4A-Nucleosome:p-5T-MDC1:p-S102-WHSC1:RNF8:Zn2+:SUMO1:p-T4827-HERC2:UBE2N:UBE2V2:RNF168:PIAS4:p-S25,S1778-TP53BP1:p-4S,2T-BRCA1-A complex:CHEK2	DNA DNA DSBs:MRN:S1981,Ac-K3016-ATM:KAT5:K14,K16,H2AFX,Me2K21-HIST1H4A-Nucleosome:MDC1:WHSC1:RNF8:Zn2+:SUMO1:HERC2:UBE2N:UBE2V2:RNF168:PIAS4:TP53BP1:BRCA1-A complex:CHEK2						Cytoplasm	complex					
+hBUBR1:hBUB3:MAD2*:CDC20 complex	hBUBR1:hBUB3:MAD2*:CDC20						Nucleus	complex					
+Mad1:kinetochorecomplex							Cytoplasm	complex					
+MAD1L1	hMAD1, HSMAD1, LOC686419, MAD1, MAD1-like 1, MAD1 mitotic arrest deficient 1-like 1, mitotic arrest deficient 1 like 1, MVA7, PIG9, TP53I9, TXBP181	mitotic arrest deficient 1 like 1	ENSG00000002822	1.10847310364393	3.37317765186927E-5	1.09768293789742E-4	Nucleus	other		8379	17120	680006	
+MAD2*CDC20complex	MAD2*CDC20						Nucleus	complex					
+MAD2L1	CMT2, HSMAD2, MAD2, MAD2 mitotic arrest deficient-like 1, MADP2, mitotic arrest deficient 2 like 1	mitotic arrest deficient 2 like 1	ENSG00000164109	-3.77507729289789	1.1256424138186E-46	1.8282671647204E-44	Nucleus	other		4085	56150	297176	
+MCC:APC/Ccomplex							Cytoplasm	complex					
+p-S124-CDC25A	CDC25A2, cell division cycle 25A, D9Ertd393e	cell division cycle 25A	ENSG00000164045	-8.47429740647703	1.98201467170437E-43	2.12654260287463E-41	Nucleus	phosphatase		993	12530	171102	
+p-S15,S20-TP53 Tetramer:ZNF385A							Nucleus	complex					
+p-S15,S20-TP53 Tetramer:ZNF385A:CDKN1A Gene							Nucleus	complex					
+p-S15-TP53Tetramer							Nucleus	complex					
+p-S166,S188-MDM2 dimer,p-S166,S188-MDM2,MDM4:TP53							Nucleus	complex					
+p-S166,S188-MDM2,MDM4	,MDM2:(,MDM2, ,MDM4)						Nucleus	group					
+p-S166,S188-MDM2:MDM4							Nucleus	complex					
+p-S166,S188-MDM2	1700007J15Rik, ACTFS, hdm2, HDMX, LSKB, MDM2-A1, MDM2 proto-oncogene, MGC5370, Transformed 3t3 cell double minute 2, transformed mouse 3T3 cell double minute 2	MDM2 proto-oncogene	ENSG00000135679	-0.73691643437075	0.0174377952282088	0.034884721178531	Nucleus	enzyme	MDM2 inhibitor, AMGMDS3, KT-253, serdemetan, CGM097, milademetan, MK-8242, siremadlin, sulanemadlin, idasanutlin, RO6839921, MI-773, RO-5045337, navtemadlin, APG-115, BI 907828, ASTX295	4193	17246	314856	
+p-S1981,Ac-K3016-ATM	AT1, ATA, ataxia telangiectasia mutated, ATC, ATD, ATDC, ATE, ATM serine/threonine kinase, C030026E19RIK, TEL1, TELO1	ATM serine/threonine kinase	ENSG00000149311	2.7505911262725	5.10671734048086E-60	7.90143559870823E-57	Nucleus	kinase	AZ31, XRD-0394, M4076, CP466722, KU-60019, AZD0156, KU-55933, AZD1390, M3541	472	11920	300711	
+p-S216-CDC25C:14-3-3proteincomplex							Cytoplasm	complex					
+p-S387-RFWD2	AI316802, C80879, CFAP78, COP, COP1 E3 ubiquitin ligase, COP1, E3 ubiquitin ligase, FAP78, LOC120096294, RFWD2, RGD1304773, RNF200	COP1 E3 ubiquitin ligase	ENSG00000143207	0.0981346858999668	0.301034752025072	0.386067252978801	Cytoplasm	enzyme		64326	26374	360860	
+p-S387-RFWD2:p-S15-TP53							Cytoplasm	complex					
+p-S435-GTSE1	B99, G2 and S PHASE EXPRESSED 1, G two S phase expressed protein 1, RGD1563164	G2 and S-phase expressed 1	ENSG00000075218	-7.32920015899257	5.02759783593755E-42	4.46961917957242E-40	Cytoplasm	other		51512	29870	300126	
+p-S435-GTSE1:PolyUb-TP53 Tetramer							Cytoplasm	complex					
+p-T68-CHEK2dimer							Nucleus	complex					
+p14ARF:p-S166,S188-MDM2 dimer,p-S166,S188-MDM2:MDM4							Nucleus	complex					
+PCBP4	1200003L19Rik, AlphaCP-4, CBP, LIP4, MCG10, poly(rC) binding protein 4	poly(rC) binding protein 4	ENSG00000090097	-0.202160970860806	0.304706776166306	0.389841143952349	Nucleus	other		57060	59092	363133	
+PCBP4:CDKN1A mRNA							Nucleus	complex					
+PHF20	6820402O20Rik, C20orf104, GLEA2, HCA58, NZF, PHD finger protein 20, RGD1305020, TDRD20A, TZP	PHD finger protein 20	ENSG00000025293	-0.617226877463434	3.51856199581613E-15	2.98266105977516E-14	Nucleus	transcription regulator		51230	228829	311575	
+phosphorylatedanaphasepromotingcomplex (APC/C)	anaphase promoting complex (APC/C)						Cytoplasm	complex					
+PKMYT1	6230424P17, MYT1, PPP1R126, protein kinase, membrane associated tyrosine/threonine 1, RGD1305434	protein kinase, membrane associated tyrosine/threonine 1	ENSG00000127564	-7.4269597279418	1.91435176194474E-50	5.74266460180118E-48	Cytoplasm	kinase	lunresertib, SM1-71	9088	268930	287101	
+Rad17-RFC complexboundto DNA							Nucleus	complex					
+RAD17:RFC							Nucleus	complex					
+Rad9-Hus1-Rad1boundto DNA							Nucleus	complex					
+RAD9:HUS1:RAD1							Nucleus	complex					
+RPA heterotrimer							Nucleus	complex					
+Ub							Cytoplasm	group					
+Ub-p-S124-CDC25A							Cytoplasm	complex					
+ubiquitinatedphospho-COP1(ser-387)	ubiquitinated COP1(ser-387)						Cytoplasm	complex					
+WEE1	WEE1A, Wee1b, WEE1 G2 checkpoint kinase, WEE 1 homolog 1 (S. pombe), WEE1hu, WEE1-LIKE protein KINASE	WEE1 G2 checkpoint kinase	ENSG00000166483	-6.84308023768163	1.30775978463082E-53	6.3025446145208E-51	Nucleus	kinase	IMP7068, debio 0123, adavosertib, ZN-c3, SM1-71	7465	22390	308937	
+ZNF385A	HZF, LOC683930, RZF, ZFP385, Zfp385a, zinc finger protein 385A, ZNF385	zinc finger protein 385A	ENSG00000161642	-0.0311945144223221	0.955367852800553	0.966845816951725	Nucleus	other		25946	29813	685474	

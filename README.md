@@ -23,7 +23,7 @@ Scripts: containing scripts used in this study, seperated in transcriptomics, pr
 
 **Proteomics:** containing the codes for quality control, Diferentially expression analysis using Limma and downstream analysis such as the volcano plots. In addition the calculation of z-scores are provided. Most of them are written in a R notebook. 
 
-**Atac: **containing the code for enrichment analysis and downstream analysis (PCA).
+**Atac:** containing the code for enrichment analysis and downstream analysis (PCA).
 
 **Integration:** containing the scrips for making the heatmap with the expression z-score, venn diagrams and density plots. 
 

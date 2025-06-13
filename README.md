@@ -16,11 +16,17 @@ Activation of naive human CD8+ T cells requires both T cell receptor (TCR) stimu
 The structure consists of multiple directories including the R files used.
 
 Output files: the output of the analysis, see last section of the readme. 
+
 Scripts: containing scripts used in this study, seperated in transcriptomics, proteomics, atac, integration and IPA. 
+
 Transcriptomics: containing the codes for quality control, Diferentially expression analysis using DEseq2 and downstream analysis such as the volcano plots. In addition the calculation of z-scores are provided.
+
 Proteomics: containing the codes for quality control, Diferentially expression analysis using Limma and downstream analysis such as the volcano plots. In addition the calculation of z-scores are provided. Most of them are written in a R notebook. 
-Atac: containing the code for enrichment analysis and downstream analysis (PCA). 
+
+Atac: containing the code for enrichment analysis and downstream analysis (PCA).
+
 Integration: containing the scrips for making the heatmap with the expression z-score, venn diagrams and density plots. 
+
 Remaining: how I made the datafiles which were used as input for IPA. 
 
 

@@ -1,6 +1,5 @@
-Eralin van Horssen; september 2024 - juni 2025
-
 Master thesis:
+Eralin van Horssen; september 2024 - juni 2025
 
 **The Power of Two:** Combinatorial Co-Stimulation of Naïve Human CD8⁺ T Cells Revealed by Transcriptomics, Proteomics, and Epigenomics. 
 Bioinformatics and Systems Biology at VU Amsterdam. 
